@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Node
+node_modules/
+frontend/dist/
+
+# Ambiente / segredos
+.env
+.env.local
+frontend/.env.local
+.vercel/

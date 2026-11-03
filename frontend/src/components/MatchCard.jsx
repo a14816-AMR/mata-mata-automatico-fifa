@@ -1,0 +1,48 @@
+import ClubCrest from './ClubCrest'
+import { CheckIcon } from './Icons'
+
+function TeamRow({ team, score, pen, showPen, state, placeholder }) {
+  return (
+    <div className={`mrow mrow--${state}`}>
+      <span className="mrow__crest">{team ? <ClubCrest clubId={team.club_id} size={26} /> : null}</span>
+      <span className={`mrow__name ${team ? '' : 'mrow__name--muted'}`}>{team ? team.name : placeholder}</span>
+      {state === 'win' && <span className="mrow__check"><CheckIcon /></span>}
+      <span className="mrow__score">
+        {score ?? ''}
+        {showPen && pen != null && <small className="mrow__pen">({pen})</small>}
+      </span>
+    </div>
+  )
+}
+
+/** Cartão de confronto usado no chaveamento e nas listas por fase. */
+export default function MatchCard({ match, teamsById, onClick, number, draft = false, style }) {
+  const t1 = teamsById[match.team1_id]
+  const t2 = teamsById[match.team2_id]
+  const isBye = match.status === 'bye' || (draft && match.round === 1 && !!t1 !== !!t2)
+  const done = match.status === 'completed'
+  const rowState = (id) => {
+    if (!match.winner_id || !id) return 'idle'
+    return match.winner_id === id ? 'win' : 'lose'
+  }
+  const clickable = !!onClick && !isBye
+  const placeholder = isBye ? 'BYE' : 'A definir'
+  const Tag = clickable ? 'button' : 'div'
+  return (
+    <Tag
+      type={clickable ? 'button' : undefined}
+      className={`match ${done ? 'match--done' : ''} ${isBye ? 'match--bye' : ''} ${clickable ? 'match--click' : ''}`}
+      onClick={clickable ? () => onClick(match) : undefined}
+      style={style}
+      aria-label={clickable ? `Registar resultado${t1 && t2 ? `: ${t1.name} contra ${t2.name}` : ''}` : undefined}
+    >
+      <TeamRow team={t1} score={match.score1} pen={match.pen1} showPen={match.had_penalties} state={rowState(match.team1_id)} placeholder={placeholder} />
+      <TeamRow team={t2} score={match.score2} pen={match.pen2} showPen={match.had_penalties} state={rowState(match.team2_id)} placeholder={placeholder} />
+      {(number || match.had_penalties || isBye) && (
+        <span className="match__tag">
+          {isBye ? 'Passagem direta' : match.had_penalties ? 'Decidido nos penáltis' : `Jogo ${number}`}
+        </span>
+      )}
+    </Tag>
+  )
+}
