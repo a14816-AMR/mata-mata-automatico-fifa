@@ -83,7 +83,7 @@ export default function PublicPage() {
   return (
     <div className="page">
       <SiteHeader live={state ? live : undefined} />
-      <main className="container">
+      <main className="container container--wide">
         {!state && !error && <div className="loading"><span className="spinner" /> A carregar o torneio…</div>}
         {error && !state && <div className="notice notice--error">Não foi possível carregar o torneio: {error}</div>}
 
@@ -97,50 +97,18 @@ export default function PublicPage() {
 
         {t && (
           <>
-            <section className="hero">
-              <p className="eyebrow">Torneio de duplas · {STATUS_LABEL[t.status]}</p>
-              <h1>{t.name}</h1>
-              <div className="stats">
-                <Stat value={idx.teams.length} label="Duplas" />
-                <Stat value={idx.teams.length * 2} label="Jogadores" />
-                {idx.matches.length > 0 && <Stat value={`${played}/${totalGames}`} label="Jogos disputados" />}
-                {t.status === 'in_progress' && cr && <Stat value={idx.roundName(cr)} label="Fase atual" />}
-              </div>
-            </section>
-
-            {champion && (
-              <section className="champion-banner">
-                <TrophyIcon size={64} />
-                <div>
-                  <p className="eyebrow">Campeã do torneio</p>
-                  <h2><ClubCrest clubId={champion.club_id} size={40} /> {champion.name}</h2>
-                </div>
-              </section>
-            )}
-
-            <section className="section">
+            <section className="section section--bracket">
               <div className="section__head">
-                <h2>Chaveamento</h2>
+                <h2>{t.name}</h2>
                 {t.status === 'draft' && <span className="pill pill--draft">Confrontos em preparação</span>}
               </div>
               {idx.matches.length > 0 ? (
-                <BracketSection idx={idx} championId={state.champion_id} draft={t.status === 'draft'} />
+                <BracketSection fill idx={idx} championId={state.champion_id} draft={t.status === 'draft'} />
               ) : (
                 <div className="notice">O chaveamento é publicado assim que as inscrições fecharem.</div>
               )}
             </section>
 
-            {played > 0 && (
-              <section className="section">
-                <div className="section__head"><h2>Últimos resultados</h2></div>
-                <LatestResults idx={idx} />
-              </section>
-            )}
-
-            <section className="section">
-              <div className="section__head"><h2>Duplas participantes</h2></div>
-              {idx.teams.length ? <TeamsGrid idx={idx} championId={state.champion_id} /> : <div className="notice">Ainda não há duplas inscritas.</div>}
-            </section>
           </>
         )}
       </main>

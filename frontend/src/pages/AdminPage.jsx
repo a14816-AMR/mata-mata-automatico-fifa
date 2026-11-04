@@ -5,6 +5,7 @@ import Login from './admin/Login'
 import TeamsStep from './admin/TeamsStep'
 import DrawStep from './admin/DrawStep'
 import ResultsStep from './admin/ResultsStep'
+import TeamsManager from './admin/TeamsManager'
 import { api, getToken, setToken } from '../lib/api'
 import { useTournamentState } from '../hooks/useTournamentState'
 import { useToast } from '../components/Toast'
@@ -61,6 +62,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(() => (getToken() ? null : false)) // null = a verificar
   const { state, setState, error, live } = useTournamentState()
   const [creating, setCreating] = useState(false)
+  const [managing, setManaging] = useState(false)
 
   useEffect(() => {
     if (authed !== null) return
@@ -74,6 +76,15 @@ export default function AdminPage() {
       live={authed ? live : undefined}
       right={<>
         <Link className="btn btn--ghost btn--sm" to="/">Página pública</Link>
+        {authed && (
+          <button
+            className="btn btn--ghost btn--sm"
+            style={{ opacity: 0.15 }}
+            onClick={() => setManaging(true)}
+            title="Gerir duplas"
+            aria-label="Gerir duplas"
+          >⚙</button>
+        )}
         {authed && <button className="btn btn--ghost btn--sm" onClick={logout}>Sair</button>}
       </>}
     />
@@ -135,6 +146,7 @@ export default function AdminPage() {
           </>
         )}
       </main>
+      {managing && t && <TeamsManager state={state} setState={setState} onClose={() => setManaging(false)} />}
     </div>
   )
 }

@@ -5,7 +5,7 @@ import RoundsList from './RoundsList'
 const prefersList = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches
 
 /** Alterna entre o chaveamento visual e a lista por fases. */
-export default function BracketSection({ idx, championId, onMatchClick, draft }) {
+export default function BracketSection({ idx, championId, onMatchClick, draft, fill }) {
   const [view, setView] = useState(prefersList() ? 'list' : 'bracket')
   return (
     <div>
@@ -14,7 +14,7 @@ export default function BracketSection({ idx, championId, onMatchClick, draft })
         <button role="tab" aria-selected={view === 'list'} className={view === 'list' ? 'is-on' : ''} onClick={() => setView('list')}>Por fases</button>
       </div>
       {view === 'bracket'
-        ? <Bracket idx={idx} championId={championId} onMatchClick={onMatchClick} draft={draft} />
+        ? <Bracket fill={fill} idx={idx} championId={championId} onMatchClick={onMatchClick} draft={draft} />
         : <RoundsList idx={idx} onMatchClick={onMatchClick} draft={draft} />}
     </div>
   )

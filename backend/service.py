@@ -146,6 +146,27 @@ class TournamentService:
         self._set_status(tid, team_count=len(cleaned))
         return self.state(tid)
 
+    def update_team(self, tid: str, team_id: str, name: str, club: str) -> dict:
+        """Edita nome/clube de uma dupla em qualquer fase do torneio."""
+        self._tournament(tid)
+        teams = self._teams(tid)
+        if not any(t["id"] == team_id for t in teams):
+            raise NotFound("Dupla não encontrada.")
+        name = " ".join(name.split())
+        if not name:
+            raise BracketError("A dupla não tem nome.")
+        if club not in CLUB_IDS:
+            raise BracketError("Escolha um clube válido.")
+        for t in teams:
+            if t["id"] == team_id:
+                continue
+            if t["name"].casefold() == name.casefold():
+                raise BracketError(f"Já existe uma dupla com o nome «{name}».")
+            if len(teams) <= len(CLUBS) and t["club_id"] == club:
+                raise BracketError("Esse clube já pertence a outra dupla.")
+        self.db.update("teams", {"id": f"eq.{team_id}"}, {"name": name, "club_id": club})
+        return self.state(tid)
+
     # --------------------------------------------------------- chaveamento
     def generate_bracket(self, tid: str) -> dict:
         t = self._tournament(tid)

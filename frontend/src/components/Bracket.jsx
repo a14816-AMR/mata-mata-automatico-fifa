@@ -6,7 +6,7 @@ import { computeLayout, matchNumberMap } from '../lib/bracket'
 
 
 /** Chaveamento em duas metades, fases da esquerda/direita para a final ao centro. */
-export default function Bracket({ idx, championId, onMatchClick, draft = false }) {
+export default function Bracket({ idx, championId, onMatchClick, draft = false, fill = false }) {
   const layout = useMemo(() => computeLayout(idx), [idx])
   const numbers = useMemo(() => matchNumberMap(idx), [idx])
   const scrollRef = useRef(null)
@@ -17,7 +17,7 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false }
   useEffect(() => {
     if (!layout || fitted || !scrollRef.current) return
     const avail = scrollRef.current.clientWidth - 8
-    setZoom(Math.max(0.5, Math.min(1, avail / layout.width)))
+    setZoom(Math.max(0.5, Math.min(fill ? 2 : 1, avail / layout.width)))
     setFitted(true)
   }, [layout, fitted])
 
@@ -34,7 +34,7 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false }
       <div className="bracket__tools">
         <button className="btn btn--ghost btn--sm" onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.1).toFixed(2)))} aria-label="Reduzir">−</button>
         <span className="bracket__zoom">{Math.round(zoom * 100)}%</span>
-        <button className="btn btn--ghost btn--sm" onClick={() => setZoom((z) => Math.min(1.4, +(z + 0.1).toFixed(2)))} aria-label="Ampliar">+</button>
+        <button className="btn btn--ghost btn--sm" onClick={() => setZoom((z) => Math.min(2.4, +(z + 0.1).toFixed(2)))} aria-label="Ampliar">+</button>
         <button className="btn btn--ghost btn--sm" onClick={() => setFitted(false)}>Ajustar</button>
       </div>
       <div className="bracket__scroll" ref={scrollRef}>

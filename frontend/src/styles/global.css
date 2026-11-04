@@ -354,3 +354,6 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.container--wide { max-width: 2200px; }
+.section--bracket .section__head { margin-top: 24px; }

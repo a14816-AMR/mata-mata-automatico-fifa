@@ -60,6 +60,7 @@ export const api = {
   renameTournament: (id, name) => request('PATCH', `/tournaments/${id}`, { name }),
   deleteTournament: (id) => request('DELETE', `/tournaments/${id}`),
   saveTeams: (id, teams) => request('PUT', `/tournaments/${id}/teams`, { teams }),
+  updateTeam: (id, teamId, team) => request('PATCH', `/tournaments/${id}/teams/${teamId}`, team),
   generateBracket: (id) => request('POST', `/tournaments/${id}/bracket`),
   backToSetup: (id) => request('DELETE', `/tournaments/${id}/bracket`),
   saveLayout: (id, slots) => request('PUT', `/tournaments/${id}/layout`, { slots }),
