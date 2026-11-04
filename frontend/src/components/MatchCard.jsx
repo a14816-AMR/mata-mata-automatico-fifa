@@ -1,17 +1,20 @@
 import ClubCrest from './ClubCrest'
 import { CheckIcon } from './Icons'
+import { useGoalFlash } from '../hooks/useGoalFlash'
 
 function TeamRow({ team, score, pen, showPen, state, placeholder }) {
+  const goal = useGoalFlash(score)
   return (
-    <div className={`mrow mrow--${state}`}>
+    <div className={`mrow mrow--${state} ${goal ? 'mrow--goal' : ''}`}>
       {team && <span className="mrow__crest-bg" aria-hidden="true"><ClubCrest clubId={team.club_id} size={80} /></span>}
       <span className="mrow__info">
         <span className={`mrow__name ${team ? '' : 'mrow__name--muted'}`}>{team ? team.name : placeholder}</span>
         {team?.players && <span className="mrow__players">{team.players}</span>}
       </span>
       {state === 'win' && <span className="mrow__check"><CheckIcon /></span>}
-      <span className="mrow__score">
-        {score ?? ''}
+      {goal && <span className="mrow__goal" aria-hidden="true">GOL!</span>}
+      <span className={`mrow__score ${goal ? 'is-goal' : ''}`}>
+        <span key={score} className="mrow__num">{score ?? ''}</span>
         {showPen && pen != null && <small className="mrow__pen">({pen})</small>}
       </span>
     </div>
