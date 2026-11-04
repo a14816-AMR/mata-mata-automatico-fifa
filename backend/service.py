@@ -15,6 +15,7 @@ from .bracket import (
     validate_partial_layout,
 )
 from .clubs import CLUB_IDS, CLUBS
+from .db import MissingColumnError
 
 MATCH_COLUMNS = (
     "id",
@@ -105,9 +106,15 @@ class TournamentService:
     def _save_matches(self, rows: list[dict]) -> None:
         # Qualquer alteração feita pelo motor (resultado, reinício, propagação)
         # termina o estado "a decorrer" dessa partida.
-        self.db.upsert(
-            "matches", [{**{k: r.get(k) for k in MATCH_COLUMNS}, "live": False} for r in rows]
-        )
+        base = [{k: r.get(k) for k in MATCH_COLUMNS} for r in rows]
+        try:
+            self.db.upsert("matches", [{**r, "live": False} for r in base])
+        except MissingColumnError as exc:
+            # Migração 002 por executar: os resultados continuam a funcionar,
+            # só o modo "a decorrer" fica indisponível.
+            if "'live'" not in str(exc):
+                raise
+            self.db.upsert("matches", base)
 
     # ------------------------------------------------------------- torneio
     def create(self, name: str) -> dict:

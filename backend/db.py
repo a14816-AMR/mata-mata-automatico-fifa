@@ -15,6 +15,10 @@ class DatabaseError(RuntimeError):
     pass
 
 
+class MissingColumnError(DatabaseError):
+    """A tabela não tem uma coluna esperada (migração por executar)."""
+
+
 class DB:
     def __init__(self) -> None:
         s = get_settings()
@@ -41,7 +45,7 @@ class DB:
             except ValueError:
                 detail = resp.text
             if "Could not find the" in str(detail) and "column" in str(detail):
-                raise DatabaseError(
+                raise MissingColumnError(
                     "A base de dados está desatualizada: falta uma coluna "
                     f"({detail}). Execute as migrações de supabase/migrations/ no "
                     "SQL Editor do Supabase (ver README)."
