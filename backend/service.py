@@ -140,13 +140,14 @@ class TournamentService:
                 raise BracketError(f"O clube escolhido por «{name}» já pertence a outra dupla.")
             names.add(name.casefold())
             clubs.add(club)
-            cleaned.append({"tournament_id": tid, "name": name, "club_id": club, "sort_order": i})
+            players = " ".join(str(team.get("players") or "").split())
+            cleaned.append({"tournament_id": tid, "name": name, "club_id": club, "players": players, "sort_order": i})
         self.db.delete("teams", {"tournament_id": f"eq.{tid}"})
         self.db.insert("teams", cleaned)
         self._set_status(tid, team_count=len(cleaned))
         return self.state(tid)
 
-    def update_team(self, tid: str, team_id: str, name: str, club: str) -> dict:
+    def update_team(self, tid: str, team_id: str, name: str, club: str, players: str = "") -> dict:
         """Edita nome/clube de uma dupla em qualquer fase do torneio."""
         self._tournament(tid)
         teams = self._teams(tid)
@@ -164,7 +165,8 @@ class TournamentService:
                 raise BracketError(f"Já existe uma dupla com o nome «{name}».")
             if len(teams) <= len(CLUBS) and t["club_id"] == club:
                 raise BracketError("Esse clube já pertence a outra dupla.")
-        self.db.update("teams", {"id": f"eq.{team_id}"}, {"name": name, "club_id": club})
+        players = " ".join(players.split())
+        self.db.update("teams", {"id": f"eq.{team_id}"}, {"name": name, "club_id": club, "players": players})
         return self.state(tid)
 
     # --------------------------------------------------------- chaveamento

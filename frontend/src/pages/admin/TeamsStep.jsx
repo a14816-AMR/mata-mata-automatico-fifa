@@ -7,12 +7,12 @@ import { useToast } from '../../components/Toast'
 
 const MAX_TEAMS = 64
 let keySeq = 0
-const blank = () => ({ key: `n${keySeq++}`, name: '', club_id: null })
+const blank = () => ({ key: `n${keySeq++}`, name: '', club_id: null, players: '' })
 
 export default function TeamsStep({ state, setState }) {
   const toast = useToast()
   const tid = state.tournament.id
-  const fromServer = () => state.teams.map((t) => ({ key: t.id, name: t.name, club_id: t.club_id }))
+  const fromServer = () => state.teams.map((t) => ({ key: t.id, name: t.name, club_id: t.club_id, players: t.players || '' }))
   const [rows, setRows] = useState(() => (state.teams.length ? fromServer() : Array.from({ length: 18 }, blank)))
   const [dirty, setDirty] = useState(!state.teams.length)
   const [picking, setPicking] = useState(null)
@@ -60,7 +60,7 @@ export default function TeamsStep({ state, setState }) {
     if (!valid) { toast('Complete o nome e o clube de todas as duplas.', 'error'); return false }
     setBusy(true)
     try {
-      const s = await api.saveTeams(tid, rows.map(({ name, club_id }) => ({ name, club_id })))
+      const s = await api.saveTeams(tid, rows.map(({ name, club_id, players }) => ({ name, club_id, players })))
       setDirty(false)
       setState(s)
       if (!quiet) toast('Duplas guardadas.', 'success')

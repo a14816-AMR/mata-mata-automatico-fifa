@@ -29,6 +29,7 @@ create table if not exists public.teams (
   tournament_id uuid not null references public.tournaments(id) on delete cascade,
   name          text not null check (char_length(name) between 1 and 60),
   club_id       text not null,
+  players       text not null default '' check (char_length(players) <= 120),
   sort_order    integer not null default 0,
   created_at    timestamptz not null default now()
 );
@@ -113,3 +114,6 @@ begin
     end if;
   end loop;
 end $$;
+
+-- Migração (bases de dados já existentes):
+-- alter table public.teams add column if not exists players text not null default '' check (char_length(players) <= 120);

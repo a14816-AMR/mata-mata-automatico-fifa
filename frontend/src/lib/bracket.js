@@ -54,7 +54,7 @@ export function matchNumberMap(idx) {
  * Geometria do chaveamento em duas metades com a final ao centro.
  * Devolve posições absolutas dos cartões e os caminhos das linhas de ligação.
  */
-export function computeLayout(idx, { cardW = 200, cardH = 78, gapY = 14, gapX = 36 } = {}) {
+export function computeLayout(idx, { cardW = 230, cardH = 104, gapY = 14, gapX = 36 } = {}) {
   const R = idx.roundsCount
   if (!R) return null
   const cols = R === 1 ? 1 : (R - 1) * 2 + 1

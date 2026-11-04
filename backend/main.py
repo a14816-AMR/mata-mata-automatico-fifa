@@ -108,7 +108,7 @@ def save_teams(tid: str, body: TeamsIn, svc: TournamentService = Depends(get_ser
 
 @admin.patch("/tournaments/{tid}/teams/{team_id}")
 def update_team(tid: str, team_id: str, body: TeamIn, svc: TournamentService = Depends(get_service)):
-    return svc.update_team(tid, team_id, body.name, body.club_id)
+    return svc.update_team(tid, team_id, body.name, body.club_id, body.players)
 
 
 @admin.post("/tournaments/{tid}/bracket")

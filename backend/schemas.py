@@ -14,6 +14,7 @@ class TournamentIn(BaseModel):
 class TeamIn(BaseModel):
     name: str = Field(min_length=1, max_length=60)
     club_id: str
+    players: str = Field(default='', max_length=120)
 
 
 class TeamsIn(BaseModel):

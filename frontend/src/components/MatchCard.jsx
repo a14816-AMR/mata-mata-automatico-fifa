@@ -4,8 +4,11 @@ import { CheckIcon } from './Icons'
 function TeamRow({ team, score, pen, showPen, state, placeholder }) {
   return (
     <div className={`mrow mrow--${state}`}>
-      <span className="mrow__crest">{team ? <ClubCrest clubId={team.club_id} size={26} /> : null}</span>
-      <span className={`mrow__name ${team ? '' : 'mrow__name--muted'}`}>{team ? team.name : placeholder}</span>
+      {team && <span className="mrow__crest-bg" aria-hidden="true"><ClubCrest clubId={team.club_id} size={80} /></span>}
+      <span className="mrow__info">
+        <span className={`mrow__name ${team ? '' : 'mrow__name--muted'}`}>{team ? team.name : placeholder}</span>
+        {team?.players && <span className="mrow__players">{team.players}</span>}
+      </span>
       {state === 'win' && <span className="mrow__check"><CheckIcon /></span>}
       <span className="mrow__score">
         {score ?? ''}

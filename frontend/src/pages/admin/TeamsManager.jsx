@@ -29,17 +29,17 @@ export default function TeamsManager({ state, setState, onClose }) {
   const save = async () => {
     const name = editing.name.trim()
     if (!name || !editing.club_id) { toast('Indique o nome e escolha o clube.', 'error'); return }
-    const payload = { name, club_id: editing.club_id }
+    const payload = { name, club_id: editing.club_id, players: editing.players.trim() }
     const done = editing.id
       ? await run(() => api.updateTeam(tid, editing.id, payload), 'Dupla atualizada.')
-      : await run(() => api.saveTeams(tid, [...teams.map(({ name, club_id }) => ({ name, club_id })), payload]), 'Dupla adicionada.')
+      : await run(() => api.saveTeams(tid, [...teams.map(({ name, club_id, players }) => ({ name, club_id, players: players || '' })), payload]), 'Dupla adicionada.')
     if (done) setEditing(null)
   }
 
   const remove = (t) => {
     if (teams.length <= 2) { toast('São necessárias pelo menos 2 duplas.', 'error'); return }
     if (!window.confirm(`Remover a dupla «${t.name}»?`)) return
-    run(() => api.saveTeams(tid, teams.filter((x) => x.id !== t.id).map(({ name, club_id }) => ({ name, club_id }))), 'Dupla removida.')
+    run(() => api.saveTeams(tid, teams.filter((x) => x.id !== t.id).map(({ name, club_id, players }) => ({ name, club_id, players: players || '' }))), 'Dupla removida.')
   }
 
   return (
@@ -50,8 +50,8 @@ export default function TeamsManager({ state, setState, onClose }) {
           <li key={t.id} className="team-row" style={{ gridTemplateColumns: '26px 52px 1fr auto auto' }}>
             <span className="team-row__n">{i + 1}</span>
             <ClubCrest clubId={t.club_id} size={40} />
-            <span>{t.name}</span>
-            <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={() => setEditing({ id: t.id, name: t.name, club_id: t.club_id })}>Editar</button>
+            <span><strong>{t.name}</strong>{t.players && <small style={{ display: 'block', color: 'var(--text-2)' }}>{t.players}</small>}</span>
+            <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={() => setEditing({ id: t.id, name: t.name, club_id: t.club_id, players: t.players || '' })}>Editar</button>
             {canStructure
               ? <button type="button" className="icon-btn" disabled={busy || teams.length <= 2} onClick={() => remove(t)} aria-label={`Remover ${t.name}`}>×</button>
               : <span />}
@@ -59,7 +59,7 @@ export default function TeamsManager({ state, setState, onClose }) {
         ))}
       </ol>
       {canStructure && (
-        <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing({ id: null, name: '', club_id: null })}>+ Adicionar dupla</button>
+        <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing({ id: null, name: '', club_id: null, players: '' })}>+ Adicionar dupla</button>
       )}
 
       {editing && (
@@ -70,6 +70,10 @@ export default function TeamsManager({ state, setState, onClose }) {
             </button>
             <input className="team-row__name" autoFocus maxLength={60} placeholder="Nome da dupla" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
           </div>
+          <label className="field" style={{ marginTop: 10 }}>
+            <span>Jogadores</span>
+            <input maxLength={120} placeholder="Ex.: João, Pedro" value={editing.players} onChange={(e) => setEditing({ ...editing, players: e.target.value })} />
+          </label>
           <div className="modal__actions">
             <button type="button" className="btn btn--ghost" onClick={() => setEditing(null)}>Cancelar</button>
             <span className="spacer" />
