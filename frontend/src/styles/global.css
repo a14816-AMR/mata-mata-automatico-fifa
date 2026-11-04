@@ -370,3 +370,6 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 .stepper-score__value { text-align: center; font-family: var(--f-display); font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .rf-pens .stepper-score { grid-template-columns: 30px 40px 30px; }
 .rf-pens .stepper-score__value { font-size: 24px; }
+
+.team-row__fields { display: grid; gap: 6px; min-width: 0; }
+.team-row__players { font-size: 13px; padding-top: 6px; padding-bottom: 6px; }

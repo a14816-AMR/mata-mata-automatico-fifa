@@ -105,14 +105,24 @@ export default function TeamsStep({ state, setState }) {
               <button type="button" className={`crest-btn ${r.club_id ? '' : 'is-empty'}`} onClick={() => setPicking(i)} aria-label={r.club_id ? 'Mudar clube' : 'Escolher clube'}>
                 {r.club_id ? <ClubCrest clubId={r.club_id} size={40} /> : <span>+</span>}
               </button>
-              <input
-                className="team-row__name"
-                placeholder={`Nome da dupla ${i + 1}`}
-                value={r.name}
-                maxLength={60}
-                onChange={(e) => update(i, { name: e.target.value })}
-                aria-label={`Nome da dupla ${i + 1}`}
-              />
+              <div className="team-row__fields">
+                <input
+                  className="team-row__name"
+                  placeholder={`Nome da dupla ${i + 1}`}
+                  value={r.name}
+                  maxLength={60}
+                  onChange={(e) => update(i, { name: e.target.value })}
+                  aria-label={`Nome da dupla ${i + 1}`}
+                />
+                <input
+                  className="team-row__name team-row__players"
+                  placeholder="Jogadores (ex.: João, Pedro)"
+                  value={r.players || ''}
+                  maxLength={120}
+                  onChange={(e) => update(i, { players: e.target.value })}
+                  aria-label={`Jogadores da dupla ${i + 1}`}
+                />
+              </div>
               {showErrors && problems[i] && <span className="team-row__err">{problems[i]}</span>}
               <button type="button" className="icon-btn" onClick={() => remove(i)} disabled={rows.length <= 2} aria-label={`Remover dupla ${i + 1}`}>×</button>
             </li>
