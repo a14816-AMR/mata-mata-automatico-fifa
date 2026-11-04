@@ -381,3 +381,20 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 
 /* logótipo: preto transparente convertido para branco, com brilho ciano */
 .ball-mark { flex: none; filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(46, 230, 255, 0.55)); }
+
+/* jogo a decorrer: borda vermelha a piscar + etiqueta "Ao vivo" */
+@keyframes live-pulse { 0%, 100% { border-color: #ff2d55; box-shadow: 0 0 0 1px rgba(255, 45, 85, 0.6), 0 0 22px -4px #ff2d55; } 50% { border-color: rgba(255, 45, 85, 0.35); box-shadow: 0 0 0 1px rgba(255, 45, 85, 0.15), 0 0 6px -4px #ff2d55; } }
+@keyframes live-dot { 50% { opacity: 0.25; } }
+.match--live { overflow: visible; border-color: #ff2d55; animation: live-pulse 1.2s ease-in-out infinite; }
+.match--live .mrow:first-child { border-radius: 12px 12px 0 0; }
+.match--live .mrow:last-of-type { border-radius: 0 0 12px 12px; }
+.match__live { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 2; display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; background: #ff2d55; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 0 12px -2px #ff2d55; pointer-events: none; }
+.match__live i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: live-dot 1s steps(2, start) infinite; }
+@media (prefers-reduced-motion: reduce) { .match--live, .match__live i { animation: none; } }
+
+/* checkbox "A decorrer" no popup do resultado */
+.rf-live { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line-strong); cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-2); user-select: none; }
+.rf-live input { width: 20px; height: 20px; margin: 0; accent-color: #ff2d55; cursor: pointer; }
+.rf-live__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3); }
+.rf-live.is-on { border-color: #ff2d55; color: #fff; background: rgba(255, 45, 85, 0.12); }
+.rf-live.is-on .rf-live__dot { background: #ff2d55; animation: live-dot 1s steps(2, start) infinite; }

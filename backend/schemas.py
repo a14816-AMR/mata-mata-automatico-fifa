@@ -31,6 +31,11 @@ class LayoutIn(BaseModel):
     slots: list[SlotIn]
 
 
+class LiveIn(BaseModel):
+    score1: int = Field(default=0, ge=0, le=99)
+    score2: int = Field(default=0, ge=0, le=99)
+
+
 class ResultIn(BaseModel):
     score1: int = Field(ge=0, le=99)
     score2: int = Field(ge=0, le=99)

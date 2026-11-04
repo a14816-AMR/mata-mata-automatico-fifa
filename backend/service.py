@@ -103,7 +103,11 @@ class TournamentService:
         self.db.update("tournaments", {"id": f"eq.{tid}"}, values)
 
     def _save_matches(self, rows: list[dict]) -> None:
-        self.db.upsert("matches", [{k: r.get(k) for k in MATCH_COLUMNS} for r in rows])
+        # Qualquer alteração feita pelo motor (resultado, reinício, propagação)
+        # termina o estado "a decorrer" dessa partida.
+        self.db.upsert(
+            "matches", [{**{k: r.get(k) for k in MATCH_COLUMNS}, "live": False} for r in rows]
+        )
 
     # ------------------------------------------------------------- torneio
     def create(self, name: str) -> dict:
@@ -250,6 +254,28 @@ class TournamentService:
         t, engine = self._match_context(match_id)
         engine.set_result(match_id, Result(**result))
         return self._commit(t, engine)
+
+    def set_live(self, match_id: str, score1: int, score2: int) -> dict:
+        """Marca a partida como a decorrer, com o placar parcial (sem vencedor)."""
+        t, engine = self._match_context(match_id)
+        m = engine.by_id.get(match_id)
+        if m is None:
+            raise NotFound("Partida não encontrada.")
+        if m["status"] == "bye":
+            raise BracketError("Esta dupla passou com BYE: não há partida a decorrer.")
+        if not m["team1_id"] or not m["team2_id"]:
+            raise BracketError("Ainda não se conhecem as duas duplas deste confronto.")
+        if m["status"] == "completed":
+            # Volta a estar em jogo: o resultado final (e o que dele dependia) é anulado.
+            engine.clear_result(match_id)
+            self._commit(t, engine)
+        self.db.update(
+            "matches",
+            {"id": f"eq.{match_id}"},
+            {"live": True, "score1": score1, "score2": score2,
+             "had_penalties": False, "pen1": None, "pen2": None},
+        )
+        return self.state(t["id"])
 
     def clear_result(self, match_id: str) -> dict:
         t, engine = self._match_context(match_id)

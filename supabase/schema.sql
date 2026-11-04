@@ -66,6 +66,8 @@ create table if not exists public.matches (
   )
 );
 create index if not exists matches_tournament_idx on public.matches(tournament_id);
+-- Partida a decorrer (também em supabase/migrations/002_match_live.sql).
+alter table public.matches add column if not exists live boolean not null default false;
 
 -- ---------------------------------------------------------------------
 -- updated_at automático

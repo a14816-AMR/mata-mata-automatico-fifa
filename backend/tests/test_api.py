@@ -12,7 +12,7 @@ from backend.service import TournamentService
 _DEFAULTS = {
     "tournaments": {"status": "setup", "team_count": 0, "bracket_size": None},
     "teams": {"sort_order": 0},
-    "matches": {"had_penalties": False, "status": "pending"},
+    "matches": {"had_penalties": False, "status": "pending", "live": False},
 }
 
 
@@ -218,3 +218,32 @@ def test_team_players_saved_and_edited(client):
         json={"name": "dupla a", "club_id": CLUB_IDS[1]},
     )
     assert r.status_code == 400
+
+
+def test_match_live_then_final(client):
+    tid = client.post("/api/tournaments", json={"name": "Ao vivo"}).json()["tournament"]["id"]
+    teams = [{"name": f"D{i}", "club_id": CLUB_IDS[i]} for i in range(4)]
+    st = client.put(f"/api/tournaments/{tid}/teams", json={"teams": teams}).json()
+    ids = [t["id"] for t in st["teams"]]
+    client.post(f"/api/tournaments/{tid}/bracket")
+    slots = [{"position": 0, "team1_id": ids[0], "team2_id": ids[1]},
+             {"position": 1, "team1_id": ids[2], "team2_id": ids[3]}]
+    assert client.put(f"/api/tournaments/{tid}/layout", json={"slots": slots}).status_code == 200
+    st = client.post(f"/api/tournaments/{tid}/start").json()
+    m = next(x for x in st["matches"] if x["round"] == 1 and x["position"] == 0)
+
+    # a decorrer: placar parcial, sem vencedor, sem avançar ninguém
+    st = client.put(f"/api/matches/{m['id']}/live", json={"score1": 1, "score2": 0}).json()
+    live = next(x for x in st["matches"] if x["id"] == m["id"])
+    assert live["live"] is True and live["status"] == "pending" and live["winner_id"] is None
+    assert (live["score1"], live["score2"]) == (1, 0)
+
+    # resultado final termina o "a decorrer"
+    st = client.put(f"/api/matches/{m['id']}/result", json={"score1": 2, "score2": 0}).json()
+    done = next(x for x in st["matches"] if x["id"] == m["id"])
+    assert done["live"] is False and done["status"] == "completed"
+
+    # voltar a pôr a decorrer anula o resultado final
+    st = client.put(f"/api/matches/{m['id']}/live", json={"score1": 0, "score2": 0}).json()
+    again = next(x for x in st["matches"] if x["id"] == m["id"])
+    assert again["live"] is True and again["status"] == "pending" and again["winner_id"] is None

@@ -34,13 +34,14 @@ export default function MatchCard({ match, teamsById, onClick, number, draft = f
   return (
     <Tag
       type={clickable ? 'button' : undefined}
-      className={`match ${done ? 'match--done' : ''} ${isBye ? 'match--bye' : ''} ${clickable ? 'match--click' : ''}`}
+      className={`match ${match.live ? 'match--live' : ''} ${done ? 'match--done' : ''} ${isBye ? 'match--bye' : ''} ${clickable ? 'match--click' : ''}`}
       onClick={clickable ? () => onClick(match) : undefined}
       style={style}
       aria-label={clickable ? `Registar resultado${t1 && t2 ? `: ${t1.name} contra ${t2.name}` : ''}` : undefined}
     >
       <TeamRow team={t1} score={match.score1} pen={match.pen1} showPen={match.had_penalties} state={rowState(match.team1_id)} placeholder={placeholder} />
       <TeamRow team={t2} score={match.score2} pen={match.pen2} showPen={match.had_penalties} state={rowState(match.team2_id)} placeholder={placeholder} />
+      {match.live && <span className="match__live"><i aria-hidden="true" />Ao vivo</span>}
       {(number || match.had_penalties || isBye) && (
         <span className="match__tag">
           {isBye ? 'Passagem direta' : match.had_penalties ? 'Decidido nos penáltis' : `Jogo ${number}`}

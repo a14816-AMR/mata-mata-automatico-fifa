@@ -67,5 +67,6 @@ export const api = {
   start: (id) => request('POST', `/tournaments/${id}/start`),
   reset: (id) => request('POST', `/tournaments/${id}/reset`),
   setResult: (matchId, result) => request('PUT', `/matches/${matchId}/result`, result),
+  setLive: (matchId, score) => request('PUT', `/matches/${matchId}/live`, score),
   clearResult: (matchId) => request('DELETE', `/matches/${matchId}/result`),
 }

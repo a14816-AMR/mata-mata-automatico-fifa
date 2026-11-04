@@ -12,7 +12,7 @@ from .bracket import BracketError
 from .clubs import CLUBS
 from .config import get_settings
 from .db import DatabaseError, get_db
-from .schemas import LayoutIn, LoginIn, ResultIn, TeamIn, TeamsIn, TournamentIn
+from .schemas import LayoutIn, LoginIn, LiveIn, ResultIn, TeamIn, TeamsIn, TournamentIn
 from .service import NotFound, TournamentService
 
 app = FastAPI(
@@ -139,6 +139,11 @@ def reset(tid: str, svc: TournamentService = Depends(get_service)):
 @admin.put("/matches/{match_id}/result")
 def set_result(match_id: str, body: ResultIn, svc: TournamentService = Depends(get_service)):
     return svc.set_result(match_id, body.model_dump())
+
+
+@admin.put("/matches/{match_id}/live")
+def set_live(match_id: str, body: LiveIn, svc: TournamentService = Depends(get_service)):
+    return svc.set_live(match_id, body.score1, body.score2)
 
 
 @admin.delete("/matches/{match_id}/result")
