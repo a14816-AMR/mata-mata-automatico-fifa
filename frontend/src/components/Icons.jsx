@@ -15,18 +15,15 @@ export const TrophyIcon = ({ size = 48 }) => (
 )
 
 export const BallMark = ({ size = 34 }) => (
-  <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-    <defs>
-      <radialGradient id="ballG" cx="38%" cy="32%">
-        <stop offset="0" stopColor="#7ff4ff" />
-        <stop offset=".55" stopColor="#2a4dff" />
-        <stop offset="1" stopColor="#0b1360" />
-      </radialGradient>
-    </defs>
-    <circle cx="32" cy="32" r="29" fill="url(#ballG)" stroke="#9feeff" strokeOpacity=".6" />
-    <path d="M32 19l11 8-4.2 13H25.2L21 27z" fill="#030a2b" fillOpacity=".75" />
-    <path d="M32 3v16M43 27l14-5M38.8 40l8.6 12M25.2 40l-8.6 12M21 27L7 22" stroke="#030a2b" strokeOpacity=".6" strokeWidth="2.2" />
-  </svg>
+  <img
+    src="/brand/logo.png"
+    width={size}
+    height={size}
+    alt=""
+    aria-hidden="true"
+    className="ball-mark"
+    draggable={false}
+  />
 )
 
 export const CheckIcon = ({ size = 14 }) => (

@@ -378,3 +378,6 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 .bg--stadium { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: #01041a; }
 .bg--stadium .bg__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .bg--stadium .bg__veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(1, 4, 26, 0.35), rgba(1, 4, 26, 0.6)); }
+
+/* logótipo: preto transparente convertido para branco, com brilho ciano */
+.ball-mark { flex: none; filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(46, 230, 255, 0.55)); }
