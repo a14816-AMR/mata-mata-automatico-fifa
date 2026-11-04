@@ -71,6 +71,31 @@ function LatestResults({ idx }) {
   )
 }
 
+function LiveNow({ idx }) {
+  const liveMatches = idx.matches.filter((m) => m.live && m.team1_id && m.team2_id)
+  if (!liveMatches.length) return null
+  return (
+    <section className="live-now" aria-live="polite">
+      {liveMatches.map((m) => {
+        const t1 = idx.teamsById[m.team1_id]
+        const t2 = idx.teamsById[m.team2_id]
+        return (
+          <div key={m.id} className="live-now__item">
+            <span className="live-now__tag"><i aria-hidden="true" />Ao vivo</span>
+            <span className="live-now__round">{idx.roundName(m.round)}</span>
+            <span className="live-now__line">
+              {t1?.name} <ClubCrest clubId={t1?.club_id} size={22} />
+              <strong>{m.score1 ?? 0} – {m.score2 ?? 0}</strong>
+              {m.had_penalties && m.pen1 != null && <small>pen. {m.pen1}–{m.pen2}</small>}
+              <ClubCrest clubId={t2?.club_id} size={22} /> {t2?.name}
+            </span>
+          </div>
+        )
+      })}
+    </section>
+  )
+}
+
 export default function PublicPage() {
   const { state, error, live } = useTournamentState()
   const idx = useMemo(() => indexState(state), [state])
@@ -97,6 +122,7 @@ export default function PublicPage() {
 
         {t && (
           <>
+            <LiveNow idx={idx} />
             <section className="section section--bracket">
               <div className="section__head">
                 <h2>{t.name}</h2>

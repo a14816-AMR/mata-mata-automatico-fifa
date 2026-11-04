@@ -143,7 +143,7 @@ def set_result(match_id: str, body: ResultIn, svc: TournamentService = Depends(g
 
 @admin.put("/matches/{match_id}/live")
 def set_live(match_id: str, body: LiveIn, svc: TournamentService = Depends(get_service)):
-    return svc.set_live(match_id, body.score1, body.score2)
+    return svc.set_live(match_id, body.score1, body.score2, body.pen1, body.pen2)
 
 
 @admin.delete("/matches/{match_id}/result")

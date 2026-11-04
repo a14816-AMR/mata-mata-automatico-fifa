@@ -247,3 +247,25 @@ def test_match_live_then_final(client):
     st = client.put(f"/api/matches/{m['id']}/live", json={"score1": 0, "score2": 0}).json()
     again = next(x for x in st["matches"] if x["id"] == m["id"])
     assert again["live"] is True and again["status"] == "pending" and again["winner_id"] is None
+
+
+def test_live_with_partial_penalties(client):
+    tid = client.post("/api/tournaments", json={"name": "Pen"}).json()["tournament"]["id"]
+    teams = [{"name": f"D{i}", "club_id": CLUB_IDS[i]} for i in range(4)]
+    st = client.put(f"/api/tournaments/{tid}/teams", json={"teams": teams}).json()
+    ids = [t["id"] for t in st["teams"]]
+    client.post(f"/api/tournaments/{tid}/bracket")
+    client.put(f"/api/tournaments/{tid}/layout", json={"slots": [
+        {"position": 0, "team1_id": ids[0], "team2_id": ids[1]},
+        {"position": 1, "team1_id": ids[2], "team2_id": ids[3]}]})
+    st = client.post(f"/api/tournaments/{tid}/start").json()
+    m = next(x for x in st["matches"] if x["round"] == 1 and x["position"] == 0)
+
+    st = client.put(f"/api/matches/{m['id']}/live", json={"score1": 1, "score2": 1, "pen1": 2, "pen2": 1}).json()
+    cur = next(x for x in st["matches"] if x["id"] == m["id"])
+    assert cur["live"] and cur["had_penalties"] and (cur["pen1"], cur["pen2"]) == (2, 1)
+
+    # placar deixa de estar empatado: penáltis parciais são descartados
+    st = client.put(f"/api/matches/{m['id']}/live", json={"score1": 2, "score2": 1, "pen1": 2, "pen2": 1}).json()
+    cur = next(x for x in st["matches"] if x["id"] == m["id"])
+    assert not cur["had_penalties"] and cur["pen1"] is None

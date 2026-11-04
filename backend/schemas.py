@@ -34,6 +34,8 @@ class LayoutIn(BaseModel):
 class LiveIn(BaseModel):
     score1: int = Field(default=0, ge=0, le=99)
     score2: int = Field(default=0, ge=0, le=99)
+    pen1: int | None = Field(default=None, ge=0, le=99)
+    pen2: int | None = Field(default=None, ge=0, le=99)
 
 
 class ResultIn(BaseModel):

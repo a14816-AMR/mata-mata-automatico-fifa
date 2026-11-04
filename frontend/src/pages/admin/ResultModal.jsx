@@ -22,7 +22,6 @@ export default function ResultModal({ match, idx, onClose, onSaved }) {
   const [s1, setS1] = useState(match.score1 ?? 0)
   const [s2, setS2] = useState(match.score2 ?? 0)
   const [live, setLive] = useState(!!match.live)
-  const [pens, setPens] = useState(match.had_penalties ? 'sim' : 'nao')
   const [p1, setP1] = useState(match.pen1 ?? 0)
   const [p2, setP2] = useState(match.pen2 ?? 0)
   const [busy, setBusy] = useState(false)
@@ -31,13 +30,11 @@ export default function ResultModal({ match, idx, onClose, onSaved }) {
   const next = nextRound ? nextRound[Math.floor(match.position / 2)] : null
   const downstreamPlayed = next && next.status === 'completed'
 
-  const hadPens = !live && pens === 'sim'
+  // Placar igual (0-0, 1-1…) → aparece sempre o campo dos penáltis.
+  const tied = s1 === s2
+  const hadPens = !live && tied
   let error = null
-  if (!live) {
-    if (!hadPens && s1 === s2) error = 'Resultado empatado: indique se houve penáltis e o respetivo resultado.'
-    else if (hadPens && s1 !== s2) error = 'Só há penáltis quando o resultado está empatado.'
-    else if (hadPens && p1 === p2) error = 'Os penáltis não podem terminar empatados.'
-  }
+  if (hadPens && p1 === p2) error = 'Empate: os penáltis não podem terminar empatados.'
   const winner = live || error ? null : hadPens ? (p1 > p2 ? t1 : t2) : s1 > s2 ? t1 : t2
 
   const save = async (e) => {
@@ -50,7 +47,7 @@ export default function ResultModal({ match, idx, onClose, onSaved }) {
     setBusy(true)
     try {
       if (live) {
-        onSaved(await api.setLive(match.id, { score1: s1, score2: s2 }))
+        onSaved(await api.setLive(match.id, { score1: s1, score2: s2, ...(tied && (p1 > 0 || p2 > 0) ? { pen1: p1, pen2: p2 } : {}) }))
         toast('Jogo a decorrer: placar atualizado.', 'success')
       } else {
         onSaved(await api.setResult(match.id, { score1: s1, score2: s2, had_penalties: hadPens, pen1: hadPens ? p1 : null, pen2: hadPens ? p2 : null }))
@@ -88,17 +85,7 @@ export default function ResultModal({ match, idx, onClose, onSaved }) {
           </div>
         </div>
 
-        {!live && (
-          <label className="field">
-            <span>Houve disputa de penáltis?</span>
-            <select value={pens} onChange={(e) => setPens(e.target.value)}>
-              <option value="nao">Não</option>
-              <option value="sim">Sim</option>
-            </select>
-          </label>
-        )}
-
-        {hadPens && (
+        {tied && (
           <div className="rf-pens">
             <span className="rf-pens__label">Penáltis</span>
             <ScoreInput value={p1} onChange={setP1} label={`penáltis de ${t1.name}`} />

@@ -262,7 +262,9 @@ class TournamentService:
         engine.set_result(match_id, Result(**result))
         return self._commit(t, engine)
 
-    def set_live(self, match_id: str, score1: int, score2: int) -> dict:
+    def set_live(
+        self, match_id: str, score1: int, score2: int, pen1: int | None = None, pen2: int | None = None
+    ) -> dict:
         """Marca a partida como a decorrer, com o placar parcial (sem vencedor)."""
         t, engine = self._match_context(match_id)
         m = engine.by_id.get(match_id)
@@ -276,11 +278,14 @@ class TournamentService:
             # Volta a estar em jogo: o resultado final (e o que dele dependia) é anulado.
             engine.clear_result(match_id)
             self._commit(t, engine)
+        # Penáltis parciais só fazem sentido com o jogo empatado.
+        shootout = score1 == score2 and pen1 is not None and pen2 is not None
         self.db.update(
             "matches",
             {"id": f"eq.{match_id}"},
             {"live": True, "score1": score1, "score2": score2,
-             "had_penalties": False, "pen1": None, "pen2": None},
+             "had_penalties": shootout, "pen1": pen1 if shootout else None,
+             "pen2": pen2 if shootout else None},
         )
         return self.state(t["id"])
 
