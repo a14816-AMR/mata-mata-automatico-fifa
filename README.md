@@ -100,6 +100,10 @@ scripts/fetch_logos.py    (Re)descarrega os logótipos
    O script pode ser executado mais do que uma vez. Cria as tabelas, as restrições (por exemplo,
    uma partida empatada não pode ficar concluída sem penáltis), o RLS de leitura pública e adiciona
    as tabelas à publicação `supabase_realtime`.
+
+   **Base de dados já criada antes?** Execute também os ficheiros de
+   [`supabase/migrations/`](supabase/migrations/) por ordem, no mesmo **SQL Editor**
+   (por exemplo, `001_team_players.sql` acrescenta o nome dos jogadores a cada dupla).
 3. Copie os dados do projeto:
    - **Project URL** (`https://<id>.supabase.co`, em **Project Settings → Data API**, ou no botão **Connect**) → `SUPABASE_URL` e `VITE_SUPABASE_URL`
    - Em **Project Settings → API Keys**:

@@ -28,8 +28,12 @@ class FakeDB:
             if key in ("select", "order", "limit", "on_conflict"):
                 continue
             op, _, raw = value.partition(".")
-            assert op == "eq"
-            out = [r for r in out if str(r.get(key)) == raw]
+            assert op in ("eq", "in")
+            if op == "in":
+                wanted = set(raw.strip("()").split(","))
+                out = [r for r in out if str(r.get(key)) in wanted]
+            else:
+                out = [r for r in out if str(r.get(key)) == raw]
         if "order" in params:
             for part in reversed(params["order"].split(",")):
                 col, _, direction = part.partition(".")
@@ -180,3 +184,37 @@ def test_full_flow_18_teams(client):
     st = client.post(f"/api/tournaments/{tid}/reset").json()
     assert st["tournament"]["status"] == "draft"
     assert next(m for m in st["matches"] if m["id"] == m0)["team1_id"] == ids[0]
+
+
+def test_team_players_saved_and_edited(client):
+    tid = client.post("/api/tournaments", json={"name": "Taça"}).json()["tournament"]["id"]
+    teams = [
+        {"name": "Dupla A", "club_id": CLUB_IDS[0], "players": "  João,   Pedro "},
+        {"name": "Dupla B", "club_id": CLUB_IDS[1]},  # jogadores são opcionais
+    ]
+    st = client.put(f"/api/tournaments/{tid}/teams", json={"teams": teams}).json()
+    by_name = {t["name"]: t for t in st["teams"]}
+    assert by_name["Dupla A"]["players"] == "João, Pedro"
+    assert by_name["Dupla B"]["players"] == ""
+
+    # guardar de novo substitui a lista (as antigas são apagadas, sem duplicados)
+    st = client.put(f"/api/tournaments/{tid}/teams", json={"teams": teams}).json()
+    assert len(st["teams"]) == 2
+
+    # editar uma dupla continua possível depois de gerar o chaveamento
+    client.post(f"/api/tournaments/{tid}/bracket")
+    team_id = next(t["id"] for t in st["teams"] if t["name"] == "Dupla B")
+    r = client.patch(
+        f"/api/tournaments/{tid}/teams/{team_id}",
+        json={"name": "Dupla B2", "club_id": CLUB_IDS[1], "players": "Ana, Rita"},
+    )
+    assert r.status_code == 200
+    edited = next(t for t in r.json()["teams"] if t["id"] == team_id)
+    assert edited["name"] == "Dupla B2" and edited["players"] == "Ana, Rita"
+
+    # nome repetido é rejeitado na edição
+    r = client.patch(
+        f"/api/tournaments/{tid}/teams/{team_id}",
+        json={"name": "dupla a", "club_id": CLUB_IDS[1]},
+    )
+    assert r.status_code == 400

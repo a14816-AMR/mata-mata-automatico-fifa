@@ -142,8 +142,12 @@ class TournamentService:
             clubs.add(club)
             players = " ".join(str(team.get("players") or "").split())
             cleaned.append({"tournament_id": tid, "name": name, "club_id": club, "players": players, "sort_order": i})
-        self.db.delete("teams", {"tournament_id": f"eq.{tid}"})
+        # Insere primeiro e só depois apaga as antigas: se a inserção falhar,
+        # as duplas existentes continuam intactas.
+        old_ids = [t["id"] for t in self._teams(tid)]
         self.db.insert("teams", cleaned)
+        if old_ids:
+            self.db.delete("teams", {"id": f"in.({','.join(old_ids)})"})
         self._set_status(tid, team_count=len(cleaned))
         return self.state(tid)
 

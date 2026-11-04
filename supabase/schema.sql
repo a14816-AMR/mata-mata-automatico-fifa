@@ -29,11 +29,14 @@ create table if not exists public.teams (
   tournament_id uuid not null references public.tournaments(id) on delete cascade,
   name          text not null check (char_length(name) between 1 and 60),
   club_id       text not null,
-  players       text not null default '' check (char_length(players) <= 120),
   sort_order    integer not null default 0,
   created_at    timestamptz not null default now()
 );
 create index if not exists teams_tournament_idx on public.teams(tournament_id);
+-- Nomes dos jogadores (também em supabase/migrations/001_team_players.sql).
+alter table public.teams add column if not exists players text not null default '';
+alter table public.teams drop constraint if exists teams_players_len;
+alter table public.teams add constraint teams_players_len check (char_length(players) <= 120);
 
 -- ---------------------------------------------------------------------
 -- Partidas. round 1 = primeira fase; o vencedor de (round, position)
@@ -115,5 +118,5 @@ begin
   end loop;
 end $$;
 
--- Migração (bases de dados já existentes):
--- alter table public.teams add column if not exists players text not null default '' check (char_length(players) <= 120);
+
+notify pgrst, 'reload schema';

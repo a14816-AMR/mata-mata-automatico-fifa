@@ -40,6 +40,12 @@ class DB:
                 detail = resp.json().get("message", resp.text)
             except ValueError:
                 detail = resp.text
+            if "Could not find the" in str(detail) and "column" in str(detail):
+                raise DatabaseError(
+                    "A base de dados está desatualizada: falta uma coluna "
+                    f"({detail}). Execute as migrações de supabase/migrations/ no "
+                    "SQL Editor do Supabase (ver README)."
+                )
             raise DatabaseError(f"Erro na base de dados ({resp.status_code}): {detail}")
         if not resp.content:
             return []
