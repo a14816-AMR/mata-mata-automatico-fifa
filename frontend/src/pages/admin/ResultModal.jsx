@@ -7,17 +7,14 @@ import { useToast } from '../../components/Toast'
 const num = (v) => (v === '' || v == null ? null : Number(v))
 
 function ScoreInput({ value, onChange, label }) {
+  const n = value === '' || value == null ? null : Number(value)
+  const set = (v) => onChange(String(Math.max(0, Math.min(99, v))))
   return (
-    <input
-      className="score-input"
-      type="number"
-      inputMode="numeric"
-      min={0}
-      max={99}
-      value={value}
-      onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, '').slice(0, 2))}
-      aria-label={label}
-    />
+    <div className="stepper-score" role="group" aria-label={label}>
+      <button type="button" className="stepper-score__btn" onClick={() => set((n ?? 0) - 1)} disabled={!n} aria-label={`Diminuir ${label}`}>−</button>
+      <output className="stepper-score__value" aria-live="polite">{n ?? '–'}</output>
+      <button type="button" className="stepper-score__btn" onClick={() => set((n ?? -1) + 1)} disabled={n === 99} aria-label={`Aumentar ${label}`}>+</button>
+    </div>
   )
 }
 

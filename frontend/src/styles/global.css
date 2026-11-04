@@ -245,7 +245,7 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 .match:hover .match__tag { display: block; }
 .mrow { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 10px 0 0; position: relative; overflow: hidden; }
 .mrow__crest-bg { position: absolute; left: -22px; top: 50%; transform: translateY(-50%); width: 92px; height: 92px; pointer-events: none; opacity: 0.95; display: grid; place-items: center; }
-.mrow__crest-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 40%, rgba(8, 20, 90, 0.95)); }
+.mrow__crest-bg .crest { width: 92px !important; height: 92px !important; -webkit-mask-image: linear-gradient(90deg, #000 45%, transparent 100%); mask-image: linear-gradient(90deg, #000 45%, transparent 100%); }
 .mrow__info { position: relative; flex: 1; min-width: 0; padding-left: 74px; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
 .mrow__players { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mrow__check { position: relative; color: var(--cyan-400); display: grid; place-items: center; }
@@ -361,3 +361,12 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 
 .container--wide { max-width: 2200px; }
 .section--bracket .section__head { margin-top: 24px; }
+
+/* stepper de golos / penáltis */
+.stepper-score { display: inline-grid; grid-template-columns: 34px 52px 34px; align-items: center; gap: 4px; border-radius: 12px; border: 1px solid var(--line-strong); background: rgba(2, 8, 36, 0.8); padding: 4px; }
+.stepper-score__btn { height: 40px; border-radius: 8px; border: 1px solid var(--line); background: rgba(14, 30, 100, 0.6); color: var(--cyan-300); font-size: 20px; line-height: 1; cursor: pointer; }
+.stepper-score__btn:hover:not(:disabled) { border-color: var(--cyan-400); box-shadow: 0 0 12px -4px var(--cyan-400); }
+.stepper-score__btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.stepper-score__value { text-align: center; font-family: var(--f-display); font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rf-pens .stepper-score { grid-template-columns: 30px 40px 30px; }
+.rf-pens .stepper-score__value { font-size: 24px; }
