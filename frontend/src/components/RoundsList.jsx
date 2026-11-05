@@ -24,7 +24,7 @@ export default function RoundsList({ idx, onMatchClick, draft = false }) {
             {games.length > 0 && (
               <div className="round__grid">
                 {games.map((m) => (
-                  <MatchCard key={m.id} match={m} teamsById={idx.teamsById} number={numbers[m.id]} onClick={onMatchClick} draft={draft} />
+                  <MatchCard key={m.id} match={m} teamsById={idx.teamsById} number={numbers[m.id]} onClick={onMatchClick} draft={draft} hidden={idx.hidden} />
                 ))}
               </div>
             )}

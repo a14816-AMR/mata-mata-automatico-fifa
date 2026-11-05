@@ -45,6 +45,26 @@ class NotFound(LookupError):
     pass
 
 
+def _masked(m: dict) -> dict:
+    """Partida sem duplas nem resultado, para um chaveamento ainda não publicado."""
+    return {
+        "id": m["id"],
+        "tournament_id": m["tournament_id"],
+        "round": m["round"],
+        "position": m["position"],
+        "team1_id": None,
+        "team2_id": None,
+        "score1": None,
+        "score2": None,
+        "had_penalties": False,
+        "pen1": None,
+        "pen2": None,
+        "winner_id": None,
+        "status": "pending",
+        "live": False,
+    }
+
+
 class TournamentService:
     def __init__(self, db: Any):
         self.db = db
@@ -72,15 +92,17 @@ class TournamentService:
 
     def state(self, tid: str | None = None, *, public: bool = False) -> dict:
         """Estado completo. Com ``public=True`` (visitantes), um chaveamento ainda
-        não publicado é omitido: o público vê o torneio e as duplas, mas não os confrontos."""
+        não publicado é mascarado: o público vê a estrutura (fases e caixas), mas
+        nenhuma dupla, resultado ou BYE — todas as caixas ficam "A definir"."""
         t = self._tournament(tid) if tid else self._latest()
         if t is None:
             return {"tournament": None, "teams": [], "matches": [], "rounds": [], "champion_id": None}
         # Sem a migração 003 a coluna não existe: comporta-se como antes (visível).
         t.setdefault("bracket_public", True)
-        if public and not t["bracket_public"]:
-            return {"tournament": t, "teams": self._teams(t["id"]), "matches": [], "rounds": [], "champion_id": None}
+        hidden = public and not t["bracket_public"]
         matches = self._matches(t["id"])
+        if hidden:
+            matches = [_masked(m) for m in matches]
         rounds = []
         champion = None
         if t.get("bracket_size"):
@@ -96,7 +118,8 @@ class TournamentService:
             "teams": self._teams(t["id"]),
             "matches": matches,
             "rounds": rounds,
-            "champion_id": champion,
+            "champion_id": None if hidden else champion,
+            "bracket_hidden": hidden,
         }
 
     @staticmethod

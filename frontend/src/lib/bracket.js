@@ -16,7 +16,9 @@ export function indexState(state) {
   for (const m of matches) (byRound[m.round] ||= []).push(m)
   for (const r in byRound) byRound[r].sort((a, b) => a.position - b.position)
   const roundName = (r) => state?.rounds?.find((x) => x.round === r)?.name || `Ronda ${r}`
-  return { teams, matches, teamsById, roundsCount, byRound, roundName }
+  // Chaveamento ainda não publicado: só a estrutura, todas as caixas "A definir".
+  const hidden = !!state?.bracket_hidden
+  return { teams, matches, teamsById, roundsCount, byRound, roundName, hidden }
 }
 
 /** Fase atual = primeira ronda com partidas por jogar. */

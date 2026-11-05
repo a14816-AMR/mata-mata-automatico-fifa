@@ -126,12 +126,12 @@ export default function PublicPage() {
             <section className="section section--bracket">
               <div className="section__head">
                 <h2>{t.name}</h2>
-                {t.status === 'draft' && t.bracket_public !== false && <span className="pill pill--draft">Confrontos em preparação</span>}
+                {idx.hidden
+                  ? <span className="pill pill--draft">Confrontos por revelar</span>
+                  : t.status === 'draft' && <span className="pill pill--draft">Confrontos em preparação</span>}
               </div>
-              {t.bracket_public === false && t.status !== 'setup' ? (
-                <div className="notice">O chaveamento já foi definido e será revelado em breve. Fique atento!</div>
-              ) : idx.matches.length > 0 ? (
-                <BracketSection fill idx={idx} championId={state.champion_id} draft={t.status === 'draft'} />
+              {idx.matches.length > 0 ? (
+                <BracketSection fill idx={idx} championId={state.champion_id} draft={t.status === 'draft' && !idx.hidden} />
               ) : (
                 <div className="notice">O chaveamento é publicado assim que as inscrições fecharem.</div>
               )}

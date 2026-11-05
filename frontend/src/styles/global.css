@@ -254,6 +254,7 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 .mrow { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 10px 0 0; position: relative; overflow: hidden; }
 .mrow__crest-bg { position: absolute; left: -22px; top: 50%; transform: translateY(-50%); width: 92px; height: 92px; pointer-events: none; opacity: 0.95; display: grid; place-items: center; }
 .mrow__crest-bg .crest { width: 92px !important; height: 92px !important; -webkit-mask-image: linear-gradient(90deg, #000 45%, transparent 100%); mask-image: linear-gradient(90deg, #000 45%, transparent 100%); }
+.mrow__crest-bg .crest--default { opacity: 0.55; }
 .mrow__info { position: relative; flex: 1; min-width: 0; padding-left: 74px; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
 .mrow__players { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mrow__check { position: relative; color: var(--cyan-400); display: grid; place-items: center; }

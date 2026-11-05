@@ -277,12 +277,18 @@ def test_bracket_hidden_until_published(client):
     assert client.put(f"/api/tournaments/{tid}/teams", json={"teams": teams}).status_code == 200
     st = client.post(f"/api/tournaments/{tid}/bracket").json()
     assert st["tournament"]["bracket_public"] is False
-    assert st["matches"]  # o administrador vê o chaveamento
+    ids = [t["id"] for t in st["teams"]]
+    slots = [{"position": 0, "team1_id": ids[0], "team2_id": ids[1]}, {"position": 1, "team1_id": ids[2], "team2_id": ids[3]}]
+    st = client.put(f"/api/tournaments/{tid}/layout", json={"slots": slots}).json()
+    assert any(m["team1_id"] for m in st["matches"])  # o administrador vê as duplas colocadas
 
     visitor = TestClient(app)
     pub = visitor.get("/api/state").json()
     assert pub["tournament"]["id"] == tid and len(pub["teams"]) == 4
-    assert pub["matches"] == [] and pub["rounds"] == []
+    # estrutura visível, mas todas as caixas vazias
+    assert pub["bracket_hidden"] is True and pub["rounds"] == st["rounds"]
+    assert len(pub["matches"]) == len(st["matches"])
+    assert all(m["team1_id"] is None and m["team2_id"] is None and m["status"] == "pending" for m in pub["matches"])
 
     # o administrador continua a ver tudo em /state
     assert client.get("/api/state").json()["matches"]
@@ -292,7 +298,8 @@ def test_bracket_hidden_until_published(client):
 
     r = client.put(f"/api/tournaments/{tid}/visibility", json={"bracket_public": True})
     assert r.status_code == 200 and r.json()["tournament"]["bracket_public"] is True
-    assert visitor.get("/api/state").json()["matches"]
+    pub = visitor.get("/api/state").json()
+    assert pub["bracket_hidden"] is False and any(m["team1_id"] for m in pub["matches"])
 
     client.put(f"/api/tournaments/{tid}/visibility", json={"bracket_public": False})
-    assert visitor.get("/api/state").json()["matches"] == []
+    assert visitor.get("/api/state").json()["bracket_hidden"] is True
