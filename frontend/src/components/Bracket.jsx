@@ -15,11 +15,23 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
 
   // Ajusta ao ecrã na primeira apresentação (sem descer abaixo de 50%).
   useEffect(() => {
-    if (!layout || fitted || !scrollRef.current) return
+    if (fill || !layout || fitted || !scrollRef.current) return
     const avail = scrollRef.current.clientWidth - 8
-    setZoom(Math.max(0.5, Math.min(fill ? 2 : 1, avail / layout.width)))
+    setZoom(Math.max(0.5, Math.min(1, avail / layout.width)))
     setFitted(true)
-  }, [layout, fitted])
+  }, [fill, layout, fitted])
+
+  // Página pública (fill): chaveamento fixo, sempre do tamanho exato do ecrã,
+  // sem scroll nem botões de zoom; reajusta quando a janela muda de tamanho.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!fill || !layout || !el) return
+    const fit = () => setZoom(Math.min(2, (el.clientWidth - 16) / layout.width))
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [fill, layout])
 
   if (!layout) return null
   const champion = championId ? idx.teamsById[championId] : null
@@ -31,14 +43,14 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
 
   return (
     <div className="bracket">
-      <div className="bracket__tools">
+      {!fill && <div className="bracket__tools">
         <button className="btn btn--ghost btn--sm" onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.1).toFixed(2)))} aria-label="Reduzir">−</button>
         <span className="bracket__zoom">{Math.round(zoom * 100)}%</span>
         <button className="btn btn--ghost btn--sm" onClick={() => setZoom((z) => Math.min(2.4, +(z + 0.1).toFixed(2)))} aria-label="Ampliar">+</button>
         <button className="btn btn--ghost btn--sm" onClick={() => setFitted(false)}>Ajustar</button>
-      </div>
-      <div className="bracket__scroll" ref={scrollRef}>
-        <div style={{ width: W * zoom, height: H * zoom }}>
+      </div>}
+      <div className={`bracket__scroll ${fill ? 'bracket__scroll--fixed' : ''}`} ref={scrollRef}>
+        <div style={{ width: W * zoom, height: H * zoom, margin: fill ? '0 auto' : undefined }}>
           <div className="bracket__canvas" style={{ width: W, height: H, transform: `scale(${zoom})` }}>
             {layout.columns.map((c, i) => (
               <div key={i} className={`bracket__colhead ${c.round === idx.roundsCount ? 'is-final' : ''}`} style={{ left: c.x, width: layout.cardW }}>
