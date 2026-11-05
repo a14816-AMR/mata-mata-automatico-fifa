@@ -3,7 +3,6 @@ import Modal from '../../components/Modal'
 import ClubCrest from '../../components/ClubCrest'
 import ClubPicker from './ClubPicker'
 import { api } from '../../lib/api'
-import { CLUBS } from '../../lib/clubs'
 import { useToast } from '../../components/Toast'
 
 /** Popup de CRUD das duplas. Editar: sempre. Adicionar/remover: só na fase de inscrição. */
@@ -15,11 +14,6 @@ export default function TeamsManager({ state, setState, onClose }) {
   const [editing, setEditing] = useState(null) // { id|null, name, club_id }
   const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
-
-  const takenBy = {}
-  if (teams.length <= CLUBS.length) {
-    teams.forEach((t) => { if (t.id !== editing?.id) takenBy[t.club_id] = t.name })
-  }
 
   const run = async (fn, ok) => {
     setBusy(true)
@@ -82,7 +76,7 @@ export default function TeamsManager({ state, setState, onClose }) {
         </div>
       )}
       {picking && (
-        <ClubPicker value={editing.club_id} takenBy={takenBy} onClose={() => setPicking(false)} onPick={(id) => { setEditing({ ...editing, club_id: id }); setPicking(false) }} />
+        <ClubPicker value={editing.club_id} onClose={() => setPicking(false)} onPick={(id) => { setEditing({ ...editing, club_id: id }); setPicking(false) }} />
       )}
     </Modal>
   )

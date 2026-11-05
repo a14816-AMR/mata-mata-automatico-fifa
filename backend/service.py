@@ -14,7 +14,7 @@ from .bracket import (
     validate_complete_layout,
     validate_partial_layout,
 )
-from .clubs import CLUB_IDS, CLUBS
+from .clubs import CLUB_IDS
 from .db import MissingColumnError
 
 MATCH_COLUMNS = (

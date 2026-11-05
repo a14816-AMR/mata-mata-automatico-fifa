@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import ClubCrest from '../../components/ClubCrest'
 import ClubPicker from './ClubPicker'
 import { api } from '../../lib/api'
-import { CLUBS } from '../../lib/clubs'
 import { useToast } from '../../components/Toast'
 
 const MAX_TEAMS = 64
@@ -24,14 +23,6 @@ export default function TeamsStep({ state, setState }) {
     if (!dirty && state.teams.length) setRows(fromServer())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.teams])
-
-  const uniqueClubs = rows.length <= CLUBS.length
-  const takenBy = useMemo(() => {
-    if (!uniqueClubs) return {}
-    const map = {}
-    rows.forEach((r, i) => { if (r.club_id && i !== picking) map[r.club_id] = r.name || `Dupla ${i + 1}` })
-    return map
-  }, [rows, picking, uniqueClubs])
 
   const problems = useMemo(() => {
     const p = {}
@@ -96,7 +87,6 @@ export default function TeamsStep({ state, setState }) {
             {size > rows.length && ` · ${size - rows.length} BYE a escolher no passo seguinte`}
           </div>
         </div>
-        {!uniqueClubs && <div className="notice">Com mais de {CLUBS.length} duplas, alguns clubes terão de ser repetidos.</div>}
 
         <ol className="team-rows">
           {rows.map((r, i) => (
@@ -140,7 +130,6 @@ export default function TeamsStep({ state, setState }) {
       {picking !== null && (
         <ClubPicker
           value={rows[picking].club_id}
-          takenBy={takenBy}
           onClose={() => setPicking(null)}
           onPick={(id) => { update(picking, { club_id: id }); setPicking(null) }}
         />

@@ -209,7 +209,6 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 .club-opt { aspect-ratio: 1; border-radius: 14px; border: 1px solid var(--line); background: radial-gradient(circle at 50% 40%, rgba(60, 100, 255, 0.25), rgba(3, 10, 43, 0.6)); display: grid; place-items: center; cursor: pointer; transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s; }
 .club-opt:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--cyan-400); box-shadow: 0 0 22px -6px var(--cyan-400); }
 .club-opt.is-selected { border-color: var(--cyan-400); box-shadow: 0 0 0 2px var(--cyan-400), 0 0 26px -4px var(--cyan-400); }
-.club-opt.is-taken { opacity: 0.22; cursor: not-allowed; filter: grayscale(1); }
 
 /* ---------------------------------------------------------- modal */
 .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(1, 4, 26, 0.72); backdrop-filter: blur(6px); animation: fade 0.15s; }
