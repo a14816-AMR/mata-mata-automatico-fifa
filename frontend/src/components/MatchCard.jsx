@@ -2,10 +2,10 @@ import ClubCrest from './ClubCrest'
 import { CheckIcon } from './Icons'
 import { useGoalFlash } from '../hooks/useGoalFlash'
 
-function TeamRow({ team, score, pen, showPen, state, placeholder, hidden }) {
+function TeamRow({ team, score, pen, showPen, state, placeholder, hidden, fx }) {
   const goal = useGoalFlash(score)
   return (
-    <div className={`mrow mrow--${state} ${goal ? 'mrow--goal' : ''}`}>
+    <div className={`mrow mrow--${state} ${goal ? 'mrow--goal' : ''} ${fx ? `mrow--${fx}` : ''}`}>
       {team && <span className="mrow__crest-bg" aria-hidden="true"><ClubCrest clubId={team.club_id} size={80} /></span>}
       {hidden && <span className="mrow__crest-bg" aria-hidden="true"><img className="crest crest--default" src="/clubs/default.png" alt="" draggable={false} /></span>}
       <span className="mrow__info">
@@ -23,7 +23,7 @@ function TeamRow({ team, score, pen, showPen, state, placeholder, hidden }) {
 }
 
 /** Cartão de confronto usado no chaveamento e nas listas por fase. */
-export default function MatchCard({ match, teamsById, onClick, number, draft = false, hidden = false, final = false, style }) {
+export default function MatchCard({ match, teamsById, onClick, number, draft = false, hidden = false, final = false, advancing = false, arriving = null, style }) {
   const t1 = teamsById[match.team1_id]
   const t2 = teamsById[match.team2_id]
   const isBye = !hidden && (match.status === 'bye' || (draft && match.round === 1 && !!t1 !== !!t2))
@@ -32,6 +32,8 @@ export default function MatchCard({ match, teamsById, onClick, number, draft = f
     if (!match.winner_id || !id) return 'idle'
     return match.winner_id === id ? 'win' : 'lose'
   }
+  // Animação de passagem de fase: o vencedor brilha aqui e "chega" à partida seguinte.
+  const fx = (id) => (!id ? null : arriving === id ? 'arrive' : advancing && match.winner_id === id ? 'advance' : null)
   const clickable = !!onClick && !isBye
   const placeholder = isBye ? 'BYE' : 'A definir'
   const Tag = clickable ? 'button' : 'div'
@@ -43,8 +45,8 @@ export default function MatchCard({ match, teamsById, onClick, number, draft = f
       style={style}
       aria-label={clickable ? `Registar resultado${t1 && t2 ? `: ${t1.name} contra ${t2.name}` : ''}` : undefined}
     >
-      <TeamRow team={t1} score={match.score1} pen={match.pen1} showPen={match.had_penalties} state={rowState(match.team1_id)} placeholder={placeholder} hidden={hidden} />
-      <TeamRow team={t2} score={match.score2} pen={match.pen2} showPen={match.had_penalties} state={rowState(match.team2_id)} placeholder={placeholder} hidden={hidden} />
+      <TeamRow team={t1} score={match.score1} pen={match.pen1} showPen={match.had_penalties} state={rowState(match.team1_id)} placeholder={placeholder} hidden={hidden} fx={fx(match.team1_id)} />
+      <TeamRow team={t2} score={match.score2} pen={match.pen2} showPen={match.had_penalties} state={rowState(match.team2_id)} placeholder={placeholder} hidden={hidden} fx={fx(match.team2_id)} />
       {match.live && <span className="match__live"><i aria-hidden="true" />Ao vivo</span>}
       {!hidden && (number || match.had_penalties || isBye) && (
         <span className="match__tag">

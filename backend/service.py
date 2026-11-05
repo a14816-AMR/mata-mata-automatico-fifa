@@ -101,7 +101,14 @@ class TournamentService:
         # Sem a migração 003 a coluna não existe: comporta-se como antes (visível).
         t.setdefault("bracket_public", True)
         hidden = public and not t["bracket_public"]
-        matches = self._matches(t["id"])
+        # Oculto: nem nomes das duplas, nem jogadores, nem clubes chegam ao público.
+        teams = [] if hidden else self._teams(t["id"])
+        return self._build_state(t, teams, self._matches(t["id"]), hidden=hidden)
+
+    @staticmethod
+    def _build_state(t: dict, teams: list[dict], matches: list[dict], *, hidden: bool = False) -> dict:
+        """Monta o estado a partir de linhas já lidas (evita voltar à base de dados)."""
+        t.setdefault("bracket_public", True)
         if hidden:
             matches = [_masked(m) for m in matches]
         rounds = []
@@ -116,8 +123,7 @@ class TournamentService:
                 champion = final["winner_id"]
         return {
             "tournament": t,
-            # Oculto: nem nomes das duplas, nem jogadores, nem clubes chegam ao público.
-            "teams": [] if hidden else self._teams(t["id"]),
+            "teams": [] if hidden else teams,
             "matches": matches,
             "rounds": rounds,
             "champion_id": None if hidden else champion,
@@ -241,8 +247,10 @@ class TournamentService:
     def save_layout(self, tid: str, slots: list[dict]) -> dict:
         t = self._tournament(tid)
         self._require_status(t, "draft")
-        team_ids = {tm["id"] for tm in self._teams(tid)}
-        first = {m["position"]: m for m in self._matches(tid) if m["round"] == 1}
+        teams = self._teams(tid)
+        team_ids = {tm["id"] for tm in teams}
+        matches = self._matches(tid)
+        first = {m["position"]: m for m in matches if m["round"] == 1}
         changed = []
         for slot in slots:
             m = first.get(slot["position"])
@@ -253,7 +261,10 @@ class TournamentService:
                 changed.append(m)
         validate_partial_layout(first.values(), team_ids)
         self._save_matches(changed)
-        return self.state(tid)
+        for m in changed:
+            m["live"] = False
+        # As linhas em memória já refletem a gravação: devolve o estado sem novas leituras.
+        return self._build_state(t, teams, matches)
 
     def start(self, tid: str) -> dict:
         t = self._tournament(tid)

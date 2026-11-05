@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import MatchCard from './MatchCard'
 import ClubCrest from './ClubCrest'
 import { TrophyIcon } from './Icons'
@@ -19,12 +19,54 @@ function useIsMobile() {
   return mobile
 }
 
+const ADVANCE_MS = 2600 // duração total da animação de passagem de fase
+
+/**
+ * Deteta partidas que acabaram de ganhar vencedor (comparando com o estado anterior)
+ * e devolve { [idPartida]: { teamId, nextId, key } } enquanto a animação corre.
+ * Na primeira apresentação não anima nada.
+ */
+function useAdvancing(idx) {
+  const prev = useRef(null)
+  const [adv, setAdv] = useState({})
+  const timers = useRef([])
+  useLayoutEffect(() => {
+    const now = Object.fromEntries(idx.matches.map((m) => [m.id, m.winner_id || null]))
+    const before = prev.current
+    prev.current = now
+    if (!before || idx.hidden) return
+    const fresh = {}
+    for (const m of idx.matches) {
+      if (!m.winner_id || before[m.id] === m.winner_id || m.status === 'bye' || m.round >= idx.roundsCount) continue
+      const next = idx.byRound[m.round + 1]?.[Math.floor(m.position / 2)]
+      if (next) fresh[m.id] = { teamId: m.winner_id, nextId: next.id, key: `${m.id}-${m.winner_id}-${Date.now()}` }
+    }
+    if (!Object.keys(fresh).length) return
+    setAdv((a) => ({ ...a, ...fresh }))
+    // Não cancelar ao mudar o estado (polling/tempo real): só ao desmontar.
+    timers.current.push(setTimeout(() => setAdv((a) => {
+      const out = { ...a }
+      for (const id in fresh) if (out[id]?.key === fresh[id].key) delete out[id]
+      return out
+    }), ADVANCE_MS))
+  }, [idx])
+  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+  return adv
+}
+
 /** Chaveamento em duas metades, fases da esquerda/direita para a final ao centro. */
-export default function Bracket({ idx, championId, onMatchClick, draft = false, fill = false }) {
+export default function Bracket({ idx, championId, onMatchClick, draft = false, fill = false, renderMatch, inlineTools = false }) {
   // No telemóvel: uma coluna por fase (esquerda → direita), cartões em tamanho real e scroll.
   const mobile = useIsMobile()
   const layout = useMemo(() => computeLayout(idx, { linear: mobile }), [idx, mobile])
   const numbers = useMemo(() => matchNumberMap(idx), [idx])
+  const advancing = useAdvancing(idx)
+  // Partida seguinte → dupla que lá está a chegar (aparece depois da luz percorrer a linha).
+  const arriving = useMemo(() => {
+    const out = {}
+    for (const id in advancing) out[advancing[id].nextId] = advancing[id].teamId
+    return out
+  }, [advancing])
   const scrollRef = useRef(null)
   const [zoom, setZoom] = useState(1)
   const [fitted, setFitted] = useState(false)
@@ -60,7 +102,7 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
   const fixed = fill && !mobile
 
   return (
-    <div className="bracket">
+    <div className={`bracket ${inlineTools ? 'bracket--inline-tools' : ''}`}>
       {!fill && !mobile && <div className="bracket__tools">
         <button className="btn btn--ghost btn--sm" onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.1).toFixed(2)))} aria-label="Reduzir">−</button>
         <span className="bracket__zoom">{Math.round(zoom * 100)}%</span>
@@ -81,11 +123,23 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
                   <stop offset="0" stopColor="#2ee6ff" />
                   <stop offset="1" stopColor="#6f7dff" />
                 </linearGradient>
+                <filter id="sparkGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3" result="b" />
+                  <feMerge><feMergeNode in="b" /><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
               </defs>
               <g transform={`translate(0 ${TOP})`}>
-                {layout.links.map((l) => (
-                  <path key={l.id} d={l.d} className={l.active ? 'link link--on' : 'link'} />
-                ))}
+                {layout.links.map((l) => {
+                  const a = advancing[l.id]
+                  if (!a) return <path key={l.id} d={l.d} className={l.active ? 'link link--on' : 'link'} />
+                  return (
+                    <g key={a.key}>
+                      <path d={l.d} className="link" />
+                      <path d={l.d} pathLength="1" className="link link--on link--draw" />
+                      <path d={l.d} pathLength="1" className="link-spark" />
+                    </g>
+                  )
+                })}
               </g>
             </svg>
             {finalNode && (
@@ -101,7 +155,12 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
                 )}
               </div>
             )}
-            {layout.nodes.map((n) => (
+            {layout.nodes.map((n) => {
+              const style = { position: 'absolute', left: n.x, top: TOP + n.y, width: layout.cardW, height: layout.cardH }
+              // Permite substituir o cartão (ex.: confrontos editáveis no sorteio).
+              const custom = renderMatch?.(n, style)
+              if (custom) return custom
+              return (
               <MatchCard
                 key={n.match.id}
                 match={n.match}
@@ -110,10 +169,13 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
                 draft={draft}
                 hidden={idx.hidden}
                 final={n.round === idx.roundsCount}
+                advancing={!!advancing[n.match.id]}
+                arriving={arriving[n.match.id]}
                 onClick={onMatchClick}
-                style={{ position: 'absolute', left: n.x, top: TOP + n.y, width: layout.cardW, height: layout.cardH }}
+                style={style}
               />
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>

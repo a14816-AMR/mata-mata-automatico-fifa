@@ -11,6 +11,7 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import ClubCrest from '../../components/ClubCrest'
+import Bracket from '../../components/Bracket'
 import { api } from '../../lib/api'
 import { indexState } from '../../lib/bracket'
 import { useToast } from '../../components/Toast'
@@ -23,6 +24,15 @@ function slotsFromState(state) {
     .filter((m) => m.round === 1)
     .sort((a, b) => a.position - b.position)
     .map((m) => ({ position: m.position, team1_id: m.team1_id, team2_id: m.team2_id }))
+}
+
+/** Só os confrontos que mudaram em relação ao último estado gravado. */
+function diffSlots(next, saved) {
+  const byPos = Object.fromEntries(saved.map((s) => [s.position, s]))
+  return next.filter((s) => {
+    const o = byPos[s.position]
+    return !o || o.team1_id !== s.team1_id || o.team2_id !== s.team2_id
+  })
 }
 
 /** Move uma dupla para um lugar; se estiver ocupado, troca as duas duplas. */
@@ -61,20 +71,58 @@ function TeamChip({ team, selected, onSelect, overlay = false }) {
   )
 }
 
+/** Dupla já colocada no chaveamento: arrastável, com o visual da linha do cartão. */
+function PlacedTeam({ team, selected, onClick }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: team.id })
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      className={`dslot__team ${selected ? 'is-selected' : ''} ${isDragging ? 'is-ghost' : ''}`}
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      aria-pressed={selected}
+      {...listeners}
+      {...attributes}
+    >
+      <span className="mrow__crest-bg" aria-hidden="true"><ClubCrest clubId={team.club_id} size={80} /></span>
+      <span className="mrow__info">
+        <span className="mrow__name">{team.name}</span>
+        {team.players && <span className="mrow__players">{team.players}</span>}
+      </span>
+    </button>
+  )
+}
+
+/** Lugar de uma dupla num confronto, desenhado como a linha de um cartão do chaveamento. */
 function Slot({ id, team, selectedId, onSelect, onPlace, label }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   const armed = selectedId && selectedId !== team?.id
   return (
     <div
       ref={setNodeRef}
-      className={`slot ${isOver ? 'is-over' : ''} ${team ? 'is-filled' : ''} ${armed ? 'is-armed' : ''}`}
+      className={`mrow dslot ${isOver ? 'is-over' : ''} ${team ? 'is-filled' : ''} ${armed ? 'is-armed' : ''}`}
       onClick={() => armed && onPlace(id)}
       role={armed ? 'button' : undefined}
       aria-label={armed ? `Colocar em ${label}` : undefined}
     >
-      {team
-        ? <TeamChip team={team} selected={selectedId === team.id} onSelect={armed ? () => onPlace(id) : onSelect} />
-        : <span className="slot__ph">{label}</span>}
+      {team ? (
+        <PlacedTeam team={team} selected={selectedId === team.id} onClick={armed ? () => onPlace(id) : () => onSelect(team.id)} />
+      ) : (
+        <span className="mrow__info dslot__ph"><span className="mrow__name mrow__name--muted">{label}</span></span>
+      )}
+    </div>
+  )
+}
+
+/** Confronto da 1.ª fase editável, no lugar do cartão normal do chaveamento. */
+function DrawMatch({ slot, teamsById, selectedId, onSelect, onPlace, style }) {
+  const bye = !!slot.team1_id !== !!slot.team2_id
+  const empty = !slot.team1_id && !slot.team2_id
+  return (
+    <div className={`match draw-card ${bye ? 'is-bye' : ''} ${empty ? 'is-empty' : ''}`} style={style}>
+      <Slot id={slotId(slot.position, 1)} team={teamsById[slot.team1_id]} selectedId={selectedId} onSelect={onSelect} onPlace={onPlace} label="Largar dupla aqui" />
+      <Slot id={slotId(slot.position, 2)} team={teamsById[slot.team2_id]} selectedId={selectedId} onSelect={onSelect} onPlace={onPlace} label={slot.team1_id ? 'Vazio = BYE' : 'Largar dupla aqui'} />
+      <span className="draw-card__tag">{bye ? 'BYE' : `Confronto ${slot.position + 1}`}</span>
     </div>
   )
 }
@@ -110,37 +158,58 @@ export default function DrawStep({ state, setState }) {
   const [slots, setSlots] = useState(() => slotsFromState(state))
   const [selectedId, setSelectedId] = useState(null)
   const [activeId, setActiveId] = useState(null)
-  const [saving, setSaving] = useState('idle') // idle | pending | saving | error
+  const [saving, setSaving] = useState('idle') // idle | saving | error
   const [busy, setBusy] = useState(false)
-  const saveTimer = useRef(null)
+  const saved = useRef(slotsFromState(state)) // último layout confirmado pelo servidor
+  const queued = useRef(null) // layout mais recente por enviar
+  const running = useRef(null) // promessa da gravação em curso
   const pending = useRef(false)
 
   // Sincroniza com o servidor (ex.: outra janela) só quando não há gravação pendente.
   useEffect(() => {
-    if (!pending.current) setSlots(slotsFromState(state))
+    if (pending.current) return
+    const fresh = slotsFromState(state)
+    saved.current = fresh
+    setSlots(fresh)
   }, [state])
 
-  const persist = useCallback((next) => {
-    pending.current = true
-    setSaving('pending')
-    clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(async () => {
-      setSaving('saving')
+  // Grava logo a seguir a cada movimento (sem espera), enviando só os confrontos
+  // alterados. Movimentos feitos durante uma gravação seguem juntos na seguinte.
+  const flush = useCallback(() => {
+    if (running.current) return running.current
+    running.current = (async () => {
+      let last = null
       try {
-        const s = await api.saveLayout(tid, next)
+        while (queued.current) {
+          const next = queued.current
+          queued.current = null
+          const changed = diffSlots(next, saved.current)
+          if (!changed.length) continue
+          setSaving('saving')
+          last = await api.saveLayout(tid, changed)
+          saved.current = next
+        }
         pending.current = false
         setSaving('idle')
-        setState(s)
+        if (last) setState(last)
       } catch (e) {
+        queued.current = null
         pending.current = false
         setSaving('error')
         toast(e.message, 'error')
-        setSlots(slotsFromState(state))
+        setSlots(saved.current)
+      } finally {
+        running.current = null
       }
-    }, 400)
-  }, [tid, setState, state, toast])
+    })()
+    return running.current
+  }, [tid, setState, toast])
 
-  useEffect(() => () => clearTimeout(saveTimer.current), [])
+  const persist = useCallback((next) => {
+    pending.current = true
+    queued.current = next
+    flush()
+  }, [flush])
 
   const place = (teamId, target) => {
     if (!teamId) return
@@ -187,18 +256,27 @@ export default function DrawStep({ state, setState }) {
     if (!window.confirm(msg)) return
     setBusy(true)
     try {
-      clearTimeout(saveTimer.current)
-      if (pending.current) { await api.saveLayout(tid, slots); pending.current = false }
+      await flush()
       setState(await api.start(tid))
       toast('Torneio iniciado! Já pode registar resultados.', 'success')
     } catch (e) { toast(e.message, 'error') } finally { setBusy(false) }
   }
 
-  // Agrupa os confrontos aos pares que se encontram na fase seguinte.
-  const pairs = []
-  for (let i = 0; i < slots.length; i += 2) pairs.push(slots.slice(i, i + 2))
+  // Chaveamento com o layout local (atualiza no momento, antes de o servidor responder).
+  const bracketIdx = useMemo(() => {
+    const byPos = Object.fromEntries(slots.map((s) => [s.position, s]))
+    return indexState({
+      ...state,
+      matches: state.matches.map((m) => (m.round === 1 && byPos[m.position] ? { ...m, ...byPos[m.position] } : m)),
+    })
+  }, [state, slots])
+  const slotByPos = Object.fromEntries(slots.map((s) => [s.position, s]))
   const activeTeam = activeId ? idx.teamsById[activeId] : null
   const onSelect = (id) => setSelectedId((cur) => (cur === id ? null : id))
+  const onPlace = (target) => place(selectedId, target)
+  const renderMatch = (n, style) => n.round === 1 && slotByPos[n.match.position] && (
+    <DrawMatch key={n.match.id} slot={slotByPos[n.match.position]} teamsById={idx.teamsById} selectedId={selectedId} onSelect={onSelect} onPlace={onPlace} style={style} />
+  )
 
   return (
     <div className="step">
@@ -210,7 +288,7 @@ export default function DrawStep({ state, setState }) {
           BYE escolhidos: <strong>{byes}</strong> / {byesNeeded}
         </div>
         <p className="hint">
-          Arraste cada dupla para um confronto (ou toque numa dupla e depois no lugar). Arrastar para um lugar
+          Arraste cada dupla para um lugar no chaveamento (ou toque numa dupla e depois no lugar). Arrastar para um lugar
           ocupado troca as duplas. Uma dupla sozinha num confronto recebe <b>BYE</b> e passa diretamente
           {size > 2 ? ` para ${nextName}` : ''}. Os BYE são decididos apenas por si.
         </p>
@@ -227,28 +305,10 @@ export default function DrawStep({ state, setState }) {
       >
         <div className="draw">
           <aside className="draw__pool">
-            <Pool teams={poolTeams} selectedId={selectedId} onSelect={onSelect} onPlace={(target) => place(selectedId, target)} />
+            <Pool teams={poolTeams} selectedId={selectedId} onSelect={onSelect} onPlace={onPlace} />
           </aside>
-          <div className="draw__matches">
-            {pairs.map((pair, pi) => (
-              <div key={pi} className="pair">
-                {size > 2 && <span className="pair__label">→ {nextName} · jogo {pi + 1}</span>}
-                {pair.map((s) => {
-                  const bye = !!s.team1_id !== !!s.team2_id
-                  return (
-                    <div key={s.position} className={`draw-match ${bye ? 'is-bye' : ''} ${!s.team1_id && !s.team2_id ? 'is-empty' : ''}`}>
-                      <div className="draw-match__head">
-                        <span>Confronto {s.position + 1}</span>
-                        {bye && <span className="badge">BYE</span>}
-                      </div>
-                      <Slot id={slotId(s.position, 1)} team={idx.teamsById[s.team1_id]} selectedId={selectedId} onSelect={onSelect} onPlace={(t) => place(selectedId, t)} label="Largar dupla aqui" />
-                      <span className="draw-match__vs">vs</span>
-                      <Slot id={slotId(s.position, 2)} team={idx.teamsById[s.team2_id]} selectedId={selectedId} onSelect={onSelect} onPlace={(t) => place(selectedId, t)} label={s.team1_id ? 'Vazio = BYE' : 'Largar dupla aqui'} />
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
+          <div className="draw__bracket">
+            <Bracket idx={bracketIdx} draft inlineTools renderMatch={renderMatch} />
           </div>
         </div>
         <DragOverlay dropAnimation={null}>
@@ -258,7 +318,7 @@ export default function DrawStep({ state, setState }) {
 
       <div className="actions-bar">
         <span className="actions-bar__status">
-          {{ idle: 'Guardado', pending: 'Alterações por guardar…', saving: 'A guardar…', error: 'Erro ao guardar' }[saving]}
+          {{ idle: 'Guardado', saving: 'A guardar…', error: 'Erro ao guardar' }[saving]}
           {!ready && ` · ${poolTeams.length ? `${poolTeams.length} por colocar` : ''}${poolTeams.length && empty ? ' · ' : ''}${empty ? `${empty} confronto(s) vazio(s)` : ''}`}
         </span>
         <button className="btn btn--ghost" onClick={backToSetup} disabled={busy}>← Duplas</button>
