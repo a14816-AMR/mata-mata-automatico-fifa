@@ -89,7 +89,7 @@ export default function ChampionCelebration({ idx, championId }) {
       <Confetti />
       <div className="champ__panel">
         <button className="champ__close" onClick={close} aria-label="Fechar">×</button>
-        <div className="champ__trophy"><TrophyIcon size={56} /></div>
+        <div className="champ__trophy"><TrophyIcon size={96} /></div>
         <p className="champ__eyebrow">Campeão</p>
         <div className="champ__crest"><ClubCrest clubId={team.club_id} size={120} /></div>
         <h2 className="champ__name">{team.name}</h2>

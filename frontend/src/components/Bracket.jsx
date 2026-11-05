@@ -90,7 +90,7 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
             </svg>
             {finalNode && (
               <div className={`bracket__trophy ${champion ? 'has-champion' : ''}`} style={{ left: finalNode.x, width: layout.cardW, top: TOP + finalNode.y - 132 }}>
-                <TrophyIcon size={champion ? 46 : 40} />
+                <TrophyIcon size={champion ? 74 : 80} />
                 {champion ? (
                   <div className="bracket__champion">
                     <ClubCrest clubId={champion.club_id} size={26} />
