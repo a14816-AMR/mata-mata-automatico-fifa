@@ -16,7 +16,7 @@ atualizada em tempo real.
 
 | Área | O que faz |
 | --- | --- |
-| **Duplas** | Definir a quantidade (2 a 64), nome de cada dupla e um clube através de uma grelha só com logótipos. Cada dupla tem exatamente um clube; com até 30 duplas, um clube não pode ser repetido. |
+| **Duplas** | Definir a quantidade (2 a 64), nome de cada dupla e um clube através de uma grelha só com logótipos. Cada dupla tem exatamente um clube. |
 | **Confrontos** | Gera automaticamente a estrutura (todas as fases). O administrador arrasta cada dupla para o confronto que quiser, troca posições (largar sobre uma dupla troca as duas) ou toca numa dupla e depois no lugar (útil em telemóvel). Uma dupla sozinha num confronto recebe **BYE**. Nunca há BYE atribuído automaticamente. Tudo é guardado no Supabase a cada alteração. |
 | **Resultados** | Golos de cada dupla e "Houve disputa de penáltis?" (Sim/Não). Com "Sim", aparecem os campos dos penáltis. Um empate não pode ser guardado sem penáltis. O resultado normal e o dos penáltis ficam guardados em separado. O vencedor avança logo para o lugar certo da fase seguinte. |
 | **Correções** | Se um resultado mudar e o vencedor for outro, as partidas seguintes que dependiam dele são anuladas e o novo vencedor ocupa o lugar (com aviso prévio). É possível apagar um resultado ou reiniciar todos os resultados mantendo a colocação inicial. |

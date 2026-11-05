@@ -111,11 +111,6 @@ def test_full_flow_18_teams(client):
     st = client.post("/api/tournaments", json={"name": "Taça do Escritório"}).json()
     tid = st["tournament"]["id"]
 
-    # clube repetido é rejeitado
-    dup = [{"name": "A", "club_id": "porto"}, {"name": "B", "club_id": "porto"}]
-    r = client.put(f"/api/tournaments/{tid}/teams", json={"teams": dup})
-    assert r.status_code == 400 and "clube" in r.json()["detail"]
-
     # clube inexistente é rejeitado
     r = client.put(f"/api/tournaments/{tid}/teams", json={"teams": [{"name": "A", "club_id": "portugal"}]})
     assert r.status_code == 400

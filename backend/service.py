@@ -136,8 +136,6 @@ class TournamentService:
         self._require_status(t, "setup")
         cleaned = []
         names: set[str] = set()
-        clubs: set[str] = set()
-        unique_clubs = len(teams) <= len(CLUBS)
         for i, team in enumerate(teams, start=1):
             name = " ".join(team["name"].split())
             club = team["club_id"]
@@ -147,10 +145,7 @@ class TournamentService:
                 raise BracketError(f"Existem duas duplas com o nome «{name}».")
             if club not in CLUB_IDS:
                 raise BracketError(f"Escolha um clube válido para a dupla «{name}».")
-            if unique_clubs and club in clubs:
-                raise BracketError(f"O clube escolhido por «{name}» já pertence a outra dupla.")
             names.add(name.casefold())
-            clubs.add(club)
             players = " ".join(str(team.get("players") or "").split())
             cleaned.append({"tournament_id": tid, "name": name, "club_id": club, "players": players, "sort_order": i})
         # Insere primeiro e só depois apaga as antigas: se a inserção falhar,
@@ -178,8 +173,6 @@ class TournamentService:
                 continue
             if t["name"].casefold() == name.casefold():
                 raise BracketError(f"Já existe uma dupla com o nome «{name}».")
-            if len(teams) <= len(CLUBS) and t["club_id"] == club:
-                raise BracketError("Esse clube já pertence a outra dupla.")
         players = " ".join(players.split())
         self.db.update("teams", {"id": f"eq.{team_id}"}, {"name": name, "club_id": club, "players": players})
         return self.state(tid)
