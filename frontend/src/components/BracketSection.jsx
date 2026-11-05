@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Bracket from './Bracket'
 import RoundsList from './RoundsList'
+import ChampionCelebration from './ChampionCelebration'
 
 const prefersList = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches
 
@@ -16,6 +17,7 @@ export default function BracketSection({ idx, championId, onMatchClick, draft, f
       {view === 'bracket'
         ? <Bracket fill={fill} idx={idx} championId={championId} onMatchClick={onMatchClick} draft={draft} />
         : <RoundsList idx={idx} onMatchClick={onMatchClick} draft={draft} />}
+      <ChampionCelebration idx={idx} championId={championId} />
     </div>
   )
 }

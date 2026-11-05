@@ -23,7 +23,7 @@ function TeamRow({ team, score, pen, showPen, state, placeholder, hidden }) {
 }
 
 /** Cartão de confronto usado no chaveamento e nas listas por fase. */
-export default function MatchCard({ match, teamsById, onClick, number, draft = false, hidden = false, style }) {
+export default function MatchCard({ match, teamsById, onClick, number, draft = false, hidden = false, final = false, style }) {
   const t1 = teamsById[match.team1_id]
   const t2 = teamsById[match.team2_id]
   const isBye = !hidden && (match.status === 'bye' || (draft && match.round === 1 && !!t1 !== !!t2))
@@ -38,7 +38,7 @@ export default function MatchCard({ match, teamsById, onClick, number, draft = f
   return (
     <Tag
       type={clickable ? 'button' : undefined}
-      className={`match ${match.live ? 'match--live' : ''} ${done ? 'match--done' : ''} ${isBye ? 'match--bye' : ''} ${clickable ? 'match--click' : ''}`}
+      className={`match ${final ? 'match--final' : ''} ${match.live ? 'match--live' : ''} ${done ? 'match--done' : ''} ${isBye ? 'match--bye' : ''} ${clickable ? 'match--click' : ''}`}
       onClick={clickable ? () => onClick(match) : undefined}
       style={style}
       aria-label={clickable ? `Registar resultado${t1 && t2 ? `: ${t1.name} contra ${t2.name}` : ''}` : undefined}

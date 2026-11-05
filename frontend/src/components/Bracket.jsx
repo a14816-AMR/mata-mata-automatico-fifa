@@ -109,6 +109,7 @@ export default function Bracket({ idx, championId, onMatchClick, draft = false, 
                 number={numbers[n.match.id]}
                 draft={draft}
                 hidden={idx.hidden}
+                final={n.round === idx.roundsCount}
                 onClick={onMatchClick}
                 style={{ position: 'absolute', left: n.x, top: TOP + n.y, width: layout.cardW, height: layout.cardH }}
               />

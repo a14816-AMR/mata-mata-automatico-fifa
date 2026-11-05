@@ -430,3 +430,48 @@ h1, h2, h3 { font-family: var(--f-display); text-transform: uppercase; letter-sp
 .mrow--goal { animation: goal-row 1.6s ease-out; }
 .mrow__goal { position: relative; z-index: 2; flex: none; padding: 1px 8px; border-radius: 6px; background: #ffd60a; color: #1a1300; font-family: var(--f-display); font-weight: 800; font-size: 14px; letter-spacing: 0.08em; animation: goal-label 2.4s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .mrow__score.is-goal, .mrow__score.is-goal .mrow__num, .mrow--goal, .mrow__goal { animation: none; } }
+
+/* ------------------------------------------------ final + campeão */
+@keyframes final-glow {
+  0%, 100% { border-color: var(--cyan-400); box-shadow: 0 0 0 1px rgba(46, 230, 255, 0.55), 0 0 22px 2px rgba(46, 230, 255, 0.55), 0 0 46px 6px rgba(35, 70, 255, 0.45); }
+  50% { border-color: var(--violet-400); box-shadow: 0 0 0 1px rgba(138, 92, 255, 0.6), 0 0 26px 3px rgba(138, 92, 255, 0.6), 0 0 54px 10px rgba(63, 107, 255, 0.4); }
+}
+.match--final { border-color: var(--cyan-400); background: linear-gradient(90deg, #12289a, #2a3cb4 60%, #4a35b8); animation: final-glow 2.6s ease-in-out infinite; }
+.match--final::before { height: 2px; background: linear-gradient(90deg, transparent, var(--cyan-300), var(--violet-400), transparent); }
+.match--final.match--live { animation: live-pulse 1.2s ease-in-out infinite; }
+
+.champ { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; overflow: hidden;
+  background: radial-gradient(60% 50% at 50% 45%, rgba(63, 107, 255, 0.35), transparent 70%), rgba(1, 4, 26, 0.82); backdrop-filter: blur(6px); animation: fade 0.25s; }
+.champ__panel { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 28px 22px 22px; text-align: center; border-radius: 22px;
+  background: linear-gradient(180deg, #13238a, #060f45); border: 1px solid var(--line-strong);
+  box-shadow: 0 30px 90px -20px rgba(0, 0, 0, 0.85), 0 0 60px -10px var(--cyan-400), 0 0 90px -20px var(--violet-400);
+  animation: champ-in 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.champ__close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: none; cursor: pointer; font-size: 22px; line-height: 1; color: var(--text); }
+.champ__trophy { display: grid; place-items: center; color: #ffd60a; filter: drop-shadow(0 0 18px rgba(255, 214, 10, 0.7)); animation: champ-bounce 1.6s ease-in-out infinite; }
+.champ__eyebrow { margin: 6px 0 10px; font-family: var(--f-display); font-size: 15px; font-weight: 600; letter-spacing: 0.4em; text-transform: uppercase;
+  background: linear-gradient(90deg, var(--cyan-300), var(--violet-400)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.champ__crest { display: grid; place-items: center; margin: 0 auto; width: 150px; height: 150px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(46, 230, 255, 0.25), transparent 70%); animation: champ-crest 1s 0.25s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+.champ__name { margin: 12px 0 2px; font-family: var(--f-display); font-size: 34px; line-height: 1.05; text-transform: uppercase; letter-spacing: 0.04em; }
+.champ__players { margin: 0; color: var(--text-2); font-size: 14px; }
+.champ__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0 0; }
+.champ__stats div { padding: 10px 4px; border-radius: 12px; background: rgba(3, 10, 43, 0.55); border: 1px solid var(--line); animation: rise 0.5s both; }
+.champ__stats div:nth-child(1) { animation-delay: 0.5s; } .champ__stats div:nth-child(2) { animation-delay: 0.6s; }
+.champ__stats div:nth-child(3) { animation-delay: 0.7s; } .champ__stats div:nth-child(4) { animation-delay: 0.8s; }
+.champ__stats div.is-main { border-color: var(--line-strong); background: linear-gradient(180deg, rgba(46, 230, 255, 0.16), rgba(138, 92, 255, 0.2)); }
+.champ__stats dt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); }
+.champ__stats dd { margin: 2px 0 0; font-family: var(--f-display); font-size: 28px; font-weight: 700; }
+.champ__stats dd small { font-size: 16px; color: var(--text-2); }
+.champ__note { margin: 10px 0 0; font-size: 11px; color: var(--text-3); }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti i { position: absolute; top: -20px; opacity: 0; animation: confetti-fall linear infinite; }
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translate3d(0, -10vh, 0) rotate(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin)); }
+}
+@keyframes champ-in { from { opacity: 0; transform: scale(0.6) translateY(30px); } }
+@keyframes champ-crest { from { opacity: 0; transform: scale(0.3) rotate(-20deg); } }
+@keyframes champ-bounce { 50% { transform: translateY(-6px) scale(1.05); } }
+@media (max-width: 420px) { .champ__stats { grid-template-columns: repeat(2, 1fr); } .champ__name { font-size: 28px; } }
+@media (prefers-reduced-motion: reduce) { .match--final, .champ__panel, .champ__trophy, .champ__crest, .champ__stats div { animation: none; } .confetti { display: none; } }
