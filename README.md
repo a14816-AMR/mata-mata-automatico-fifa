@@ -18,6 +18,7 @@ atualizada em tempo real.
 | --- | --- |
 | **Duplas** | Definir a quantidade (2 a 64), nome de cada dupla e um clube através de uma grelha só com logótipos. Cada dupla tem exatamente um clube. |
 | **Confrontos** | Gera automaticamente a estrutura (todas as fases). O administrador arrasta cada dupla para o confronto que quiser, troca posições (largar sobre uma dupla troca as duas) ou toca numa dupla e depois no lugar (útil em telemóvel). Uma dupla sozinha num confronto recebe **BYE**. Nunca há BYE atribuído automaticamente. Tudo é guardado no Supabase a cada alteração. |
+| **Publicação** | Um interruptor no topo da administração mostra ou oculta o chaveamento na página pública. Os torneios novos começam ocultos: o administrador monta os confrontos à vontade e publica-os quando quiser. Enquanto estiver oculto, o público vê apenas o aviso de que o chaveamento será revelado em breve. |
 | **Resultados** | Golos de cada dupla e "Houve disputa de penáltis?" (Sim/Não). Com "Sim", aparecem os campos dos penáltis. Um empate não pode ser guardado sem penáltis. O resultado normal e o dos penáltis ficam guardados em separado. O vencedor avança logo para o lugar certo da fase seguinte. |
 | **Correções** | Se um resultado mudar e o vencedor for outro, as partidas seguintes que dependiam dele são anuladas e o novo vencedor ocupa o lugar (com aviso prévio). É possível apagar um resultado ou reiniciar todos os resultados mantendo a colocação inicial. |
 | **Página pública** | Duplas participantes (em prova, eliminada ou campeã), chaveamento completo com a final ao centro, vista "Por fases" para telemóvel, últimos resultados com penáltis, campeã em destaque. Atualiza-se sozinha via Supabase Realtime, sem recarregar a página. É só de leitura. |
@@ -103,7 +104,8 @@ scripts/fetch_logos.py    (Re)descarrega os logótipos
 
    **Base de dados já criada antes?** Execute também os ficheiros de
    [`supabase/migrations/`](supabase/migrations/) por ordem, no mesmo **SQL Editor**
-   (por exemplo, `001_team_players.sql` acrescenta o nome dos jogadores a cada dupla).
+   (por exemplo, `001_team_players.sql` acrescenta o nome dos jogadores a cada dupla e
+   `003_bracket_public.sql` permite ocultar o chaveamento do público).
 3. Copie os dados do projeto:
    - **Project URL** (`https://<id>.supabase.co`, em **Project Settings → Data API**, ou no botão **Connect**) → `SUPABASE_URL` e `VITE_SUPABASE_URL`
    - Em **Project Settings → API Keys**:

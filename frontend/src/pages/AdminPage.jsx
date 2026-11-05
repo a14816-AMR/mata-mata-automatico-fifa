@@ -30,6 +30,44 @@ function Stepper({ status }) {
   )
 }
 
+/** Interruptor: mostra ou oculta o chaveamento na página pública. */
+function BracketVisibility({ t, setState }) {
+  const toast = useToast()
+  const [busy, setBusy] = useState(false)
+  const visible = t.bracket_public !== false
+  const toggle = async () => {
+    if (visible && !window.confirm('Ocultar o chaveamento da página pública? Os visitantes deixam de ver os confrontos e os resultados.')) return
+    setBusy(true)
+    try {
+      setState(await api.setBracketPublic(t.id, !visible))
+      toast(visible ? 'Chaveamento oculto do público.' : 'Chaveamento publicado na página pública.')
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className={`visibility ${visible ? 'is-on' : ''}`}>
+      <div className="visibility__text">
+        <strong>{visible ? 'Chaveamento visível ao público' : 'Chaveamento oculto do público'}</strong>
+        <span>{visible
+          ? 'Os visitantes veem os confrontos e os resultados na página pública.'
+          : 'Só a administração vê os confrontos. Publique quando quiser revelá-los.'}</span>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={visible}
+        aria-label="Mostrar chaveamento na página pública"
+        className="switch"
+        disabled={busy}
+        onClick={toggle}
+      ><i aria-hidden="true" /></button>
+    </div>
+  )
+}
+
 function CreateTournament({ onCreated, hasCurrent, onCancel }) {
   const toast = useToast()
   const [name, setName] = useState('')
@@ -140,6 +178,7 @@ export default function AdminPage() {
               </div>
               <Stepper status={t.status} />
             </section>
+            {t.status !== 'setup' && <BracketVisibility t={t} setState={setState} />}
             {t.status === 'setup' && <TeamsStep key={t.id} state={state} setState={setState} />}
             {t.status === 'draft' && <DrawStep key={t.id} state={state} setState={setState} />}
             {(t.status === 'in_progress' || t.status === 'finished') && <ResultsStep key={t.id} state={state} setState={setState} />}

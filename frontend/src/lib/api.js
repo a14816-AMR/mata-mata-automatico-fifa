@@ -63,6 +63,7 @@ export const api = {
   updateTeam: (id, teamId, team) => request('PATCH', `/tournaments/${id}/teams/${teamId}`, team),
   generateBracket: (id) => request('POST', `/tournaments/${id}/bracket`),
   backToSetup: (id) => request('DELETE', `/tournaments/${id}/bracket`),
+  setBracketPublic: (id, visible) => request('PUT', `/tournaments/${id}/visibility`, { bracket_public: visible }),
   saveLayout: (id, slots) => request('PUT', `/tournaments/${id}/layout`, { slots }),
   start: (id) => request('POST', `/tournaments/${id}/start`),
   reset: (id) => request('POST', `/tournaments/${id}/reset`),

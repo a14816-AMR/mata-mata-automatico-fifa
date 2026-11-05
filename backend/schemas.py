@@ -31,6 +31,10 @@ class LayoutIn(BaseModel):
     slots: list[SlotIn]
 
 
+class VisibilityIn(BaseModel):
+    bracket_public: bool
+
+
 class LiveIn(BaseModel):
     score1: int = Field(default=0, ge=0, le=99)
     score2: int = Field(default=0, ge=0, le=99)

@@ -70,10 +70,16 @@ class TournamentService:
             "matches", {"tournament_id": f"eq.{tid}", "order": "round.asc,position.asc"}
         )
 
-    def state(self, tid: str | None = None) -> dict:
+    def state(self, tid: str | None = None, *, public: bool = False) -> dict:
+        """Estado completo. Com ``public=True`` (visitantes), um chaveamento ainda
+        não publicado é omitido: o público vê o torneio e as duplas, mas não os confrontos."""
         t = self._tournament(tid) if tid else self._latest()
         if t is None:
             return {"tournament": None, "teams": [], "matches": [], "rounds": [], "champion_id": None}
+        # Sem a migração 003 a coluna não existe: comporta-se como antes (visível).
+        t.setdefault("bracket_public", True)
+        if public and not t["bracket_public"]:
+            return {"tournament": t, "teams": self._teams(t["id"]), "matches": [], "rounds": [], "champion_id": None}
         matches = self._matches(t["id"])
         rounds = []
         champion = None
@@ -118,8 +124,19 @@ class TournamentService:
 
     # ------------------------------------------------------------- torneio
     def create(self, name: str) -> dict:
-        t = self.db.insert("tournaments", {"name": name.strip(), "status": "setup"})[0]
+        row = {"name": name.strip(), "status": "setup"}
+        try:
+            # Torneios novos começam com o chaveamento oculto ao público.
+            t = self.db.insert("tournaments", {**row, "bracket_public": False})[0]
+        except MissingColumnError:
+            t = self.db.insert("tournaments", row)[0]
         return self.state(t["id"])
+
+    def set_bracket_public(self, tid: str, visible: bool) -> dict:
+        """Mostra ou oculta o chaveamento na página pública (em qualquer fase)."""
+        self._tournament(tid)
+        self._set_status(tid, bracket_public=visible)
+        return self.state(tid)
 
     def rename(self, tid: str, name: str) -> dict:
         self._tournament(tid)

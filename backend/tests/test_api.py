@@ -10,7 +10,7 @@ from backend.main import app, get_service
 from backend.service import TournamentService
 
 _DEFAULTS = {
-    "tournaments": {"status": "setup", "team_count": 0, "bracket_size": None},
+    "tournaments": {"status": "setup", "team_count": 0, "bracket_size": None, "bracket_public": True},
     "teams": {"sort_order": 0},
     "matches": {"had_penalties": False, "status": "pending", "live": False},
 }
@@ -269,3 +269,30 @@ def test_live_with_partial_penalties(client):
     st = client.put(f"/api/matches/{m['id']}/live", json={"score1": 2, "score2": 1, "pen1": 2, "pen2": 1}).json()
     cur = next(x for x in st["matches"] if x["id"] == m["id"])
     assert not cur["had_penalties"] and cur["pen1"] is None
+
+
+def test_bracket_hidden_until_published(client):
+    tid = client.post("/api/tournaments", json={"name": "Surpresa"}).json()["tournament"]["id"]
+    teams = [{"name": f"D{i}", "club_id": CLUB_IDS[i]} for i in range(4)]
+    assert client.put(f"/api/tournaments/{tid}/teams", json={"teams": teams}).status_code == 200
+    st = client.post(f"/api/tournaments/{tid}/bracket").json()
+    assert st["tournament"]["bracket_public"] is False
+    assert st["matches"]  # o administrador vê o chaveamento
+
+    visitor = TestClient(app)
+    pub = visitor.get("/api/state").json()
+    assert pub["tournament"]["id"] == tid and len(pub["teams"]) == 4
+    assert pub["matches"] == [] and pub["rounds"] == []
+
+    # o administrador continua a ver tudo em /state
+    assert client.get("/api/state").json()["matches"]
+
+    # visitantes não podem publicar
+    assert visitor.put(f"/api/tournaments/{tid}/visibility", json={"bracket_public": True}).status_code == 401
+
+    r = client.put(f"/api/tournaments/{tid}/visibility", json={"bracket_public": True})
+    assert r.status_code == 200 and r.json()["tournament"]["bracket_public"] is True
+    assert visitor.get("/api/state").json()["matches"]
+
+    client.put(f"/api/tournaments/{tid}/visibility", json={"bracket_public": False})
+    assert visitor.get("/api/state").json()["matches"] == []

@@ -3,16 +3,16 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .auth import check_password, issue_token, require_admin
+from .auth import check_password, issue_token, require_admin, verify_token
 from .bracket import BracketError
 from .clubs import CLUBS
 from .config import get_settings
 from .db import DatabaseError, get_db
-from .schemas import LayoutIn, LoginIn, LiveIn, ResultIn, TeamIn, TeamsIn, TournamentIn
+from .schemas import LayoutIn, LoginIn, LiveIn, ResultIn, TeamIn, TeamsIn, TournamentIn, VisibilityIn
 from .service import NotFound, TournamentService
 
 app = FastAPI(
@@ -66,8 +66,15 @@ def clubs():
 
 
 @public.get("/state")
-def state(tournament_id: str | None = None, svc: TournamentService = Depends(get_service)):
-    return svc.state(tournament_id)
+def state(
+    tournament_id: str | None = None,
+    authorization: str = Header(default=""),
+    svc: TournamentService = Depends(get_service),
+):
+    # O administrador vê sempre o chaveamento; os visitantes só depois de publicado.
+    token = authorization.removeprefix("Bearer ").strip()
+    is_admin = bool(token) and verify_token(token)
+    return svc.state(tournament_id, public=not is_admin)
 
 
 @public.post("/auth/login")
@@ -119,6 +126,11 @@ def generate_bracket(tid: str, svc: TournamentService = Depends(get_service)):
 @admin.delete("/tournaments/{tid}/bracket")
 def back_to_setup(tid: str, svc: TournamentService = Depends(get_service)):
     return svc.back_to_setup(tid)
+
+
+@admin.put("/tournaments/{tid}/visibility")
+def set_visibility(tid: str, body: VisibilityIn, svc: TournamentService = Depends(get_service)):
+    return svc.set_bracket_public(tid, body.bracket_public)
 
 
 @admin.put("/tournaments/{tid}/layout")

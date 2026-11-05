@@ -17,6 +17,8 @@ create table if not exists public.tournaments (
                check (status in ('setup', 'draft', 'in_progress', 'finished')),
   team_count   integer not null default 0 check (team_count >= 0 and team_count <= 128),
   bracket_size integer check (bracket_size is null or bracket_size >= 2),
+  -- false: o chaveamento só é visível na administração até ser publicado.
+  bracket_public boolean not null default true,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
@@ -24,6 +26,9 @@ create table if not exists public.tournaments (
 -- ---------------------------------------------------------------------
 -- Duplas (cada dupla tem exatamente um clube)
 -- ---------------------------------------------------------------------
+-- Visibilidade do chaveamento (também em supabase/migrations/003_bracket_public.sql).
+alter table public.tournaments add column if not exists bracket_public boolean not null default true;
+
 create table if not exists public.teams (
   id            uuid primary key default gen_random_uuid(),
   tournament_id uuid not null references public.tournaments(id) on delete cascade,
@@ -102,7 +107,10 @@ drop policy if exists "public read teams" on public.teams;
 create policy "public read teams" on public.teams for select using (true);
 
 drop policy if exists "public read matches" on public.matches;
-create policy "public read matches" on public.matches for select using (true);
+-- Partidas só são legíveis quando o chaveamento do torneio está publicado.
+create policy "public read matches" on public.matches for select using (
+  exists (select 1 from public.tournaments t where t.id = matches.tournament_id and t.bracket_public)
+);
 
 -- ---------------------------------------------------------------------
 -- Realtime
