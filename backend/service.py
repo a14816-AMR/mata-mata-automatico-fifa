@@ -93,7 +93,8 @@ class TournamentService:
     def state(self, tid: str | None = None, *, public: bool = False) -> dict:
         """Estado completo. Com ``public=True`` (visitantes), um chaveamento ainda
         não publicado é mascarado: o público vê a estrutura (fases e caixas), mas
-        nenhuma dupla, resultado ou BYE — todas as caixas ficam "A definir"."""
+        nenhuma dupla (nome, jogadores, clube), resultado ou BYE — todas as caixas
+        ficam "A definir"."""
         t = self._tournament(tid) if tid else self._latest()
         if t is None:
             return {"tournament": None, "teams": [], "matches": [], "rounds": [], "champion_id": None}
@@ -115,7 +116,8 @@ class TournamentService:
                 champion = final["winner_id"]
         return {
             "tournament": t,
-            "teams": self._teams(t["id"]),
+            # Oculto: nem nomes das duplas, nem jogadores, nem clubes chegam ao público.
+            "teams": [] if hidden else self._teams(t["id"]),
             "matches": matches,
             "rounds": rounds,
             "champion_id": None if hidden else champion,

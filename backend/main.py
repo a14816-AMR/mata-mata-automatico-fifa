@@ -68,12 +68,15 @@ def clubs():
 @public.get("/state")
 def state(
     tournament_id: str | None = None,
+    view: str | None = None,
     authorization: str = Header(default=""),
     svc: TournamentService = Depends(get_service),
 ):
     # O administrador vê sempre o chaveamento; os visitantes só depois de publicado.
+    # A página pública pede view=public para mostrar o mesmo que o público,
+    # mesmo quando o browser tem uma sessão de administrador aberta.
     token = authorization.removeprefix("Bearer ").strip()
-    is_admin = bool(token) and verify_token(token)
+    is_admin = view != "public" and bool(token) and verify_token(token)
     return svc.state(tournament_id, public=not is_admin)
 
 

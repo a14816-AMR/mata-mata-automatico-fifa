@@ -52,7 +52,7 @@ async function request(method, path, body) {
 }
 
 export const api = {
-  state: () => request('GET', '/state'),
+  state: ({ publicView = false } = {}) => request('GET', publicView ? '/state?view=public' : '/state'),
   health: () => request('GET', '/health'),
   login: (password) => request('POST', '/auth/login', { password }),
   check: () => request('GET', '/auth/check'),

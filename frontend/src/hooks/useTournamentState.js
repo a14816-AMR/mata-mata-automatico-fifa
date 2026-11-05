@@ -8,8 +8,9 @@ const POLL_MS = 15000
  * Estado completo do torneio + sincronização em tempo real.
  * Qualquer alteração em tournaments/teams/matches (Supabase Realtime) volta a
  * carregar o estado. Sem Realtime disponível, recorre a polling.
+ * Com ``publicView`` mostra sempre a versão pública (mesmo com sessão de admin).
  */
-export function useTournamentState() {
+export function useTournamentState({ publicView = false } = {}) {
   const [state, setState] = useState(null)
   const [error, setError] = useState(null)
   const [live, setLive] = useState(false)
@@ -21,7 +22,7 @@ export function useTournamentState() {
     if (inflight.current) { again.current = true; return }
     inflight.current = true
     try {
-      const s = await api.state()
+      const s = await api.state({ publicView })
       setState(s)
       setError(null)
     } catch (e) {
@@ -30,7 +31,7 @@ export function useTournamentState() {
       inflight.current = false
       if (again.current) { again.current = false; refresh() }
     }
-  }, [])
+  }, [publicView])
 
   const scheduleRefresh = useCallback(() => {
     clearTimeout(timer.current)

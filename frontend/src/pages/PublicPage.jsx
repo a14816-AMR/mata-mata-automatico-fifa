@@ -97,7 +97,7 @@ function LiveNow({ idx }) {
 }
 
 export default function PublicPage() {
-  const { state, error, live } = useTournamentState()
+  const { state, error, live } = useTournamentState({ publicView: true })
   const idx = useMemo(() => indexState(state), [state])
   const t = state?.tournament
   const champion = state?.champion_id ? idx.teamsById[state.champion_id] : null
