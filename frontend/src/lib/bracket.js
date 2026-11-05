@@ -54,18 +54,20 @@ export function matchNumberMap(idx) {
 
 /**
  * Geometria do chaveamento em duas metades com a final ao centro.
+ * Com `linear`, usa uma só coluna por fase (esquerda → direita, final no fim),
+ * pensada para ecrãs estreitos com scroll.
  * Devolve posições absolutas dos cartões e os caminhos das linhas de ligação.
  */
-export function computeLayout(idx, { cardW = 230, cardH = 104, gapY = 14, gapX = 36 } = {}) {
+export function computeLayout(idx, { cardW = 230, cardH = 104, gapY = 14, gapX = 36, linear = false } = {}) {
   const R = idx.roundsCount
   if (!R) return null
-  const cols = R === 1 ? 1 : (R - 1) * 2 + 1
-  const finalCol = R === 1 ? 0 : R - 1
+  const cols = linear ? R : R === 1 ? 1 : (R - 1) * 2 + 1
+  const finalCol = linear ? R - 1 : R === 1 ? 0 : R - 1
   const colX = (c) => c * (cardW + gapX)
   const nodes = []
   const yOf = {} // id -> centro vertical
   const firstRound = idx.byRound[1] || []
-  const perSide = R === 1 ? 1 : firstRound.length / 2
+  const perSide = linear ? firstRound.length || 1 : R === 1 ? 1 : firstRound.length / 2
   const height = Math.max(perSide * (cardH + gapY) - gapY, cardH)
 
   for (let r = 1; r <= R; r++) {
@@ -75,7 +77,7 @@ export function computeLayout(idx, { cardW = 230, cardH = 104, gapY = 14, gapX =
       let side, local, col
       if (r === R) {
         side = 'center'; local = 0; col = finalCol
-      } else if (m.position < half) {
+      } else if (linear || m.position < half) {
         side = 'left'; local = m.position; col = r - 1
       } else {
         side = 'right'; local = m.position - half; col = cols - r
@@ -112,7 +114,7 @@ export function computeLayout(idx, { cardW = 230, cardH = 104, gapY = 14, gapX =
   }
   const columns = []
   for (let c = 0; c < cols; c++) {
-    const r = c <= finalCol ? c + 1 : cols - c
+    const r = linear || c <= finalCol ? c + 1 : cols - c
     columns.push({ x: colX(c), round: r, name: idx.roundName(r) })
   }
   return { nodes, links, columns, width: colX(cols - 1) + cardW, height, cardW, cardH }
